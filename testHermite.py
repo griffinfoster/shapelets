@@ -3,12 +3,6 @@
 Testing script to check shaplet decomposition and plotting
 """
 
-#Project ToDo:
-#   interactive region selector
-#   polar shapelets
-#   fit for nmax
-#   selecting the best beta_0
-
 import sys,os
 import pyfits as pf
 import numpy as n
@@ -16,7 +10,7 @@ import pylab as p
 from scipy import optimize
 
 #shapelet functions
-import img, decomp, shapelet
+import img, decomp, shapelet, fileio
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -43,10 +37,12 @@ if __name__ == '__main__':
         help='Fractional radius of image to fit the centroid within, default: 1, the entire image')
     opts, args = o.parse_args(sys.argv[1:])
 
-    fn=args[0]
-    hdulist=pf.open(fn)
-    im=hdulist[0].data
-    im=im[0,0]
+    #fn=args[0]
+    #hdulist=pf.open(fn)
+    #im=hdulist[0].data
+    #im=im[0,0]
+    ifn=args[0]
+    im=fileio.readFITS(args[0])
     im0=im
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
@@ -109,7 +105,7 @@ if __name__ == '__main__':
     if nmax[0]-int(nrange/2) > 0: n0=nmax[0]-int(nrange/2)
     else: n0=1
     n1=nrange+n0
-    print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1)
+    print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
     x0=optimize.brute(decomp.chi2nmaxFunc,[n.s_[n0:n1:1]],args=(im,nm,[xopt[0],xopt[1]],[xopt[2],xopt[3]]),finish=None)
     #x0=optimize.brute(decomp.chi2nmaxFunc,[n.s_[n0:n1:1]],args=(im,nm,[xopt[0],xopt[1]],xc),finish=None)
     nmax=[int(x0),int(x0)]
@@ -144,9 +140,13 @@ if __name__ == '__main__':
 
     p.subplot(224)
     p.title('Coefficents')
-    coeffs=n.reshape(coeffs,nmax)
-    p.pcolor(coeffs)
+    sqCoeffs=n.reshape(coeffs,nmax)
+    p.pcolor(sqCoeffs)
     p.colorbar()
+    
+    ofn='test.coeff'
+    print 'Writing to file:',ofn
+    fileio.writeHermiteCoeffs(ofn,coeffs,[xopt[2],xopt[3]],im.shape,[xopt[0],xopt[1]],nmax,info=ifn)
     
     p.show()
 
