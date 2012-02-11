@@ -54,5 +54,33 @@ def readHermiteCoeffs(fn):
     fh.close()
     return d
 
+def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,info=''):
+    """Write Lageurre coeffs and meta data to a pickle file
+    fn: output file name
+    coeffs: set of coefficients for Lageurre polynomials
+    xc: center position
+    size: size in pixels of image
+    beta: characteristic beta value
+    norder: max order of polynomials
+    """
+    d={ 'coeffs':coeffs,
+        'xc':xc,
+        'size':size,
+        'beta':beta,
+        'norder':norder,
+        'info': info }
+    fh=open(fn,'wb')
+    pickle.dump(d,fh)
+    fh.close()
+
+def readLageurreCoeffs(fn):
+    """Read a binary coeff file and return a dictionary of values
+    fn: filename to read
+    """
+    fh=open(fn,'rb')
+    d=pickle.load(fh)
+    fh.close()
+    return d
+
 if __name__ == "__main__":
     print "fileio"

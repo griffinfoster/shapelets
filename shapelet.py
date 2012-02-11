@@ -41,15 +41,42 @@ def polarDimBasis(n0,m0,beta=1.):
     """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta"""
     b0=laguerre(n0,m0)
     norm=(((-1.)**((n0-n.abs(m0))/2))/(beta**(n.abs(m0)+1)))*((float(scipy.factorial(int((n0-n.abs(m0))/2)))/float(scipy.factorial(int((n0+n.abs(m0))/2))))**.5)
-    exp0=lambda r,th: norm * r**(n.abs(m0)) * b0((r**2.)/(beta**2.)) * n.exp(-.5*(r**2.)/(beta**2.)) * n.exp(-1j**m0*th)
+    exp0=lambda r,th: norm * r**(n.abs(m0)) * b0((r**2.)/(beta**2.)) * n.exp(-.5*(r**2.)/(beta**2.)) * n.exp(-1j*m0*th)
     return exp0
+
+def polarArray(xc,size):
+    """Return arrays of shape 'size' with radius and theta values centered on xc"""
+    rx=n.array(range(0,size[1]),dtype=float)-xc[0]
+    ry=n.array(range(0,size[0]),dtype=float)-xc[1]
+    rx=n.reshape(n.tile(rx,size[0]),(size[0],size[1]))
+    ry=n.reshape(n.tile(ry,size[1]),(size[1],size[0]))
+    rExp = lambda x,y: n.sqrt(n.square(x) + n.square(y))
+    thExp = lambda x,y: n.arctan2(y,x)
+    return rExp(rx,ry.T), thExp(rx,ry.T)
+
+def xy2rth(rx,ry):
+    """Convert a range of x and y to r,th arrays of shape (len(x),len(y))"""
+    rx0=n.reshape(n.tile(rx,len(ry)),(len(ry),len(rx)))
+    ry0=n.reshape(n.tile(ry,len(rx)),(len(rx),len(ry)))
+    rExp = lambda x,y: n.sqrt(n.square(x) + n.square(y))
+    thExp = lambda x,y: n.arctan2(y,x)
+    return rExp(rx0,ry0.T), thExp(rx0,ry0.T)
+
+
+def computeBasisPolar(b,r,th):
+    """Compute the values of a Polar Basis function b over the R and Theta range"""
+    return b(r,th)
+
+def computeBasisPolarAtom(b,r,th):
+    """Compute the polar basis function b in the position (rad,theta)"""
+    return b(r,th)
 
 def computeBasis2d(b,rx,ry):
     """Compute the values of a 2D Basis function b in range (rx,ry)"""
     return n.outer(b[0](rx),b[1](ry))
 
 def computeBasis2dAtom(b,x,y):
-    """Compute a the basis function in the position (x,y)"""
+    """Compute the basis function b in the position (x,y)"""
     return b[0]([x])*b[1]([y])
 
 if __name__ == "__main__":

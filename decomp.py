@@ -25,6 +25,22 @@ def initBeta2(im,frac=.2):
     """
     return [frac*im.shape[0],frac*im.shape[1]]
 
+def genPolarBasisMatrix(beta,nmax,r,th):
+    """Generate the n x k matrix of basis functions(k) for each pixel(n)
+    beta: characteristic size of the shaeplets
+    nmax: maximum decomposition order
+    r: radius matrix of n pixels
+    th: theta matrix of n pixels
+    """
+    bvals=[]
+    for nn in range(nmax):
+        for mm in n.arange(-1*nn,nn+1):
+            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
+                bf=shapelet.polarDimBasis(nn,mm,beta=beta)
+                bvals.append(shapelet.computeBasisPolar(bf,r,th).flatten())
+    bm=n.array(bvals)
+    return bm.transpose()
+
 def genBasisMatrix(beta,nmax,rx,ry):
     """Generate the n x k matrix of basis functions(k) for each pixel(n)
     nmax: maximum decompisition order
@@ -56,7 +72,47 @@ def solveCoeffs(m,im):
     theta_hat=n.dot(mTm_inv_mT,im_flat) #compute the coefficents for the basis functions
     return theta_hat
 
-def chi2Func(params,nmax,im,nm,xregion=None):
+def chi2PolarFunc(params,nmax,im,nm):
+    """Function which is to be minimized in the chi^2 analysis for Polar shapelets
+    params = [beta, xc, yc]
+        beta: characteristic size of shapelets, fit parameter
+        xc: x centroid of shapelets, fit parameter
+        yc: y centroid of shapelets, fit parameter
+    nmax: number of coefficents to use in the Laguerre polynomials
+    im: observed image
+    nm: noise map
+    """
+    beta=params[0]
+    xc=params[1]
+    yc=params[2]
+    print 'beta: %f\txc: (%f,%f)'%(beta,xc,yc)
+
+    size=im.shape
+    r,th=shapelet.polarArray([xc,yc],size)
+    bvals=genPolarBasisMatrix(beta,nmax,r,th)
+    coeffs=solveCoeffs(bvals,im)
+    mdl=n.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+
+def chi2nmaxPolarFunc(params,im,nm,beta,xc):
+    """
+    params = [nmax]
+        nmax: number of coefficents
+    im: observed image
+    nm: noise map
+    beta: fit beta value
+    xc: fit centroid position
+    """
+    print params
+    nmax=params
+    size=im.shape
+    r,th=shapelet.polarArray(xc,size)
+    bvals=genPolarBasisMatrix(beta,nmax,r,th)
+    coeffs=solveCoeffs(bvals,im)
+    mdl=n.abs(img.constructModel(bvals,coeffs,xc,size))
+    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+
+def chi2Func(params,nmax,im,nm):
     """Function which is to be minimized in the chi^2 analysis
     params = [beta, xc, yc]
         beta: characteristic size of shapelets, fit parameter
@@ -65,13 +121,12 @@ def chi2Func(params,nmax,im,nm,xregion=None):
     nmax: number of coefficents to use in x,y
     im: observed image
     nm: noise map
-    xregion: limit the centroid to this region during the fit
     """
     betaX=params[0]
     betaY=params[1]
     xc=params[2]
     yc=params[3]
-    print betaX,betaY,xc,yc
+    print 'beta: (%f,%f)\txc: (%f,%f)'%(betaX,betaY,xc,yc)
     
     size=im.shape
     #shift the (0,0) point to the centroid
@@ -80,7 +135,7 @@ def chi2Func(params,nmax,im,nm,xregion=None):
 
     bvals=genBasisMatrix([betaX,betaY],nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructHermiteModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2betaFunc(params,xc,yc,nmax,im,nm):
@@ -103,7 +158,7 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
 
     bvals=genBasisMatrix([betaX,betaY],nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructHermiteModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2xcFunc(params,beta,nmax,im,nm):
@@ -126,7 +181,7 @@ def chi2xcFunc(params,beta,nmax,im,nm):
 
     bvals=genBasisMatrix(beta,nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructHermiteModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2nmaxFunc(params,im,nm,beta,xc):
@@ -147,7 +202,7 @@ def chi2nmaxFunc(params,im,nm,beta,xc):
 
     bvals=genBasisMatrix(beta,nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructHermiteModel(bvals,coeffs,xc,size)
+    mdl=img.constructModel(bvals,coeffs,xc,size)
     return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 if __name__ == "__main__":

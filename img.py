@@ -86,10 +86,26 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
         noisemap=n.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
         return noisemap
 
-def constructHermiteModel(bvals,coeffs,xc,size):
+def constructModel(bvals,coeffs,xc,size):
     """Construct a model image based on the basis functions values, centroid position xc, and coeffs on an image
-    with size pixels
+    with size dimensions
     """
     model_img=n.dot(bvals,coeffs)
     model_img=n.reshape(model_img,size)
     return model_img
+
+def polarCoeffImg(coeffs,nmax):
+    """Return 2D array of coeffs for Laguerre components for plotting
+    """
+    im=n.zeros((nmax*2,nmax))
+    cnt=0
+    for nn in range(nmax):
+        for mm in n.arange(-1*nn,nn+1):
+            if nn%2==0 and mm%2==0:
+                im[mm+nmax-1,nn]=coeffs[cnt]
+                cnt+=1
+            elif nn%2==1 and mm%2==1:
+                im[mm+nmax-1,nn]=coeffs[cnt]
+                cnt+=1
+    return im
+
