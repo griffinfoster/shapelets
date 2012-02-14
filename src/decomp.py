@@ -94,6 +94,27 @@ def chi2PolarFunc(params,nmax,im,nm):
     mdl=n.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
     return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
+def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
+    """Function which is to be minimized in the chi^2 analysis for Polar shapelets
+    params = [beta]
+        beta: characteristic size of shapelets, fit parameter
+    xc: x centroid of shapelets
+    yc: y centroid of shapelets
+    r: radius from centroid, array of im.shape
+    th: angle from centroid, array of im.shape
+    nmax: number of coefficents to use in the Laguerre polynomials
+    im: observed image
+    nm: noise map
+    """
+    beta=params[0]
+    print 'beta: %f'%(beta)
+
+    size=im.shape
+    bvals=genPolarBasisMatrix(beta,nmax,r,th)
+    coeffs=solveCoeffs(bvals,im)
+    mdl=n.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+
 def chi2nmaxPolarFunc(params,im,nm,beta,xc):
     """
     params = [nmax]

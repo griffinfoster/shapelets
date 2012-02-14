@@ -92,7 +92,7 @@ if __name__ == '__main__':
     coeffs=shapelets.decomp.solveCoeffs(bvals,im)
     mdl=n.abs(shapelets.img.constructModel(bvals,coeffs,xc0,im.shape))
     p.imshow(mdl)
-    p.text(xc[0],xc[1],'+')
+    p.text(xc0[1],xc0[0],'+')
     p.colorbar()
     
     p.subplot(223)

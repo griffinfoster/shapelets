@@ -39,9 +39,8 @@ def maxPos(im, region=None):
     else: offset=[0,0]
     #shift minimum to zero
     im=im-im.min()
-    #return n.argwhere(im==n.max(im))[0]
     maxpos=n.argwhere(im==n.max(im))[0]
-    return [maxpos[1]+offset[1],maxpos[0]+offset[0]]
+    return [maxpos[0]+offset[0],maxpos[1]+offset[1]]
 
 def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
     """Generate a noise map based on background pixels by iteratively clipping noise above a set sigma level

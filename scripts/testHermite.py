@@ -96,9 +96,9 @@ if __name__ == '__main__':
     ry=n.array(range(0,im.shape[1]),dtype=float)-xc0[1]
     bvals=shapelets.decomp.genBasisMatrix(beta0,nmax0,rx,ry)
     coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-    mdl=shapelets.img.constructModel(bvals,coeffs,xc,im.shape)
+    mdl=shapelets.img.constructModel(bvals,coeffs,xc0,im.shape)
     p.imshow(mdl)
-    p.text(xc0[0],xc0[1],'+')
+    p.text(xc0[1],xc0[0],'+')
     p.colorbar()
     
     p.subplot(223)
