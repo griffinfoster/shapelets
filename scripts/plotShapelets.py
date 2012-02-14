@@ -6,12 +6,7 @@ Plot a set of shapelet basis functions
 import sys,os
 import numpy as n
 import pylab as p
-
-#shapelet functions
-import img, decomp, shapelet, fileio
-
-#2x nmax
-#2x beta
+import shapelets
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -46,12 +41,12 @@ if __name__ == '__main__':
         fullImgReal=n.zeros((len(ry)*nmax*2,len(rx)*nmax))
         fullImgImag=n.zeros((len(ry)*nmax*2,len(rx)*nmax))
         yOffset=len(ry)*nmax
-        r,th=shapelet.xy2rth(rx,ry)
+        r,th=shapelets.shapelet.xy2rth(rx,ry)
         for nn in range(nmax):
             for mm in n.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                    bf=shapelet.polarDimBasis(nn,mm,beta=beta)
-                    bval=shapelet.computeBasisPolar(bf,r,th)
+                    bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta)
+                    bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
                     fullImgReal[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.real
                     fullImgImag[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.imag
         fig=p.figure()
@@ -92,8 +87,8 @@ if __name__ == '__main__':
         fullImg=n.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
-                bf=shapelet.dimBasis2d(n0,n1,beta=beta)
-                bval=shapelet.computeBasis2d(bf,rx,ry)
+                bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta)
+                bval=shapelets.shapelet.computeBasis2d(bf,rx,ry)
                 fullImg[n0*len(rx):(n0+1)*len(rx),n1*len(ry):(n1+1)*len(ry)]=bval
         
         p.imshow(fullImg)

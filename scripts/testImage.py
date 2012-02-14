@@ -2,11 +2,10 @@
 
 import Image
 import pylab as p
-
-import fileio
+import shapelets
 
 fn='cyg_s15.png'
-im=fileio.readImg(fn,gs=True)
+im=shapelets.fileio.readImg(fn,gs=True)
 print im.shape
 
 p.imshow(im)

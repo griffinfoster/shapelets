@@ -7,8 +7,7 @@ import sys,os
 import pyfits as pf
 import numpy as n
 import pylab as p
-
-import img,fileio
+import shapelets
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -21,12 +20,12 @@ if __name__ == '__main__':
 
     fn=args[0]
     if fn.split('.')[-1].lower() == 'fits':
-        im=fileio.readFITS(fn)
+        im=shapelets.fileio.readFITS(fn)
     else:
-        im=fileio.readImg(fn)
+        im=shapelets.fileio.readImg(fn)
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
-        im=img.selPxRange(im,extent)
+        im=shapelets.img.selPxRange(im,extent)
     
     p.title('Image')
     p.imshow(im)

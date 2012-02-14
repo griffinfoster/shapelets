@@ -6,9 +6,7 @@ Plot a shapelet coefficient file
 import sys,os
 import numpy as n
 import pylab as p
-
-#shapelet functions
-import img, decomp, shapelet, fileio
+import shapelets
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -18,12 +16,12 @@ if __name__ == '__main__':
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
-    d=fileio.readHermiteCoeffs(ifn)
+    d=shapelets.fileio.readHermiteCoeffs(ifn)
 
     rx=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
     ry=n.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-    bvals=decomp.genBasisMatrix(d['beta'],d['norder'],rx,ry)
-    mdl=img.constructHermiteModel(bvals,d['coeffs'],d['xc'],d['size'])
+    bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],rx,ry)
+    mdl=shapelets.img.constructHermiteModel(bvals,d['coeffs'],d['xc'],d['size'])
     
     p.subplot(121)
     p.title('Model')
