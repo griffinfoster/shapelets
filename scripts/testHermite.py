@@ -51,7 +51,7 @@ if __name__ == '__main__':
         nextent=map(int, opts.nregion.split(','))
         nm=shapelets.img.estimateNoiseMap(im0,region=nextent)
         nm=shapelets.img.selPxRange(nm,extent)
-    
+
     #select initial beta and xc
     if opts.beta==None:
         beta=shapelets.decomp.initBeta(im)

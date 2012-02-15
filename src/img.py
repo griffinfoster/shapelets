@@ -59,8 +59,8 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
         conv=False
         niter=0
         if maxiter==0:conv=True #compute the noise on the unclipped image
-        #imHist=[]
         while not conv:
+            print niter
             im=n.ma.masked_greater(im,sigma*n.abs(mode0))
             im=n.ma.masked_less(im,-1*sigma*n.abs(mode0))
             if n.abs(n.std(im)-std0)/std0 < tol: conv=True
@@ -70,12 +70,9 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
             niter+=1
             #imHist.append(im)
             if not(maxiter is None) and niter==maxiter: break
-        noisemap=n.ones_like(im)
-        noisemap=n.random.normal(n.mean(im),n.std(im),(im.shape[0],im.shape[1]))
-        #for h in range(len(imHist)):
-        #    p.subplot(1,len(imHist),h+1)
-        #    p.imshow(imHist[h])
-        #p.show()
+        #noisemap=n.ones_like(im)
+        #noisemap=n.random.normal(n.mean(im),n.std(im),(im.shape[0],im.shape[1]))
+        noisemap=n.ones((im.shape[0],im.shape[1]))*n.std(im)
         return noisemap
     else:
         im_region=selPxRange(im,region)
