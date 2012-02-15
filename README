@@ -1,0 +1,38 @@
+=======================================================
+           _                      _      _
+       ___| |__   __ _ _ __   ___| | ___| |_ ___
+      / __| '_ \ / _` | '_ \ / _ \ |/ _ \ __/ __|
+      \__ \ | | | (_| | |_) |  __/ |  __/ |_\__ \
+      |___/_| |_|\__,_| .__/ \___|_|\___|\__|___/
+                      |_|
+=======================================================
+Created: 15.02.12
+Last Modified: 15.02.12
+Contact: griffin.foster@gmail.com
+
+Python module for fitting images(FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using
+Hermite and Laguerre polynomials.
+
+Required Python Modules:
+=======================================================
+    *matplotlib/pylab
+    *numpy
+    *scipy
+    *pyfits
+    *PIL
+    *cPickle (usually a standard install with python)
+
+Install:
+=======================================================
+sudo python setup.py install
+
+Usage:
+=======================================================
+The scripts directory contains a number scripts for fitting.
+
+testHermite.py: fits beta, and the centroid to use Hermite polynomials(Cartesian)
+testLaguerre.py: fits beta, and the centroid to use Laguerre polynomials(Polar)
+fitBeta.py: fits only beta, uses a fixed centroid, both sets of polynomials can be fit for
+
+plot*.py: scripts for plotting coefficient files, shapelet basis functions and images
+
