@@ -20,38 +20,26 @@ if __name__ == '__main__':
     #load cofficients file
     ifn=args[0]
     d=shapelets.fileio.readCoeffs(ifn)
-
-    #generate image from coefficients
-    print 'generating mdl image...',
-    sys.stdout.flush()
-    if d['mode'].startswith('herm'):
-        rx=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
-        ry=n.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-        bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],rx,ry)
-        mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['xc'],d['size'])
-    elif d['mode'].startswith('lag'):
-        r0,th0=shapelets.shapelet.polarArray(d['xc'],d['size'])
-        bvals=shapelets.decomp.genPolarBasisMatrix(d['beta'],d['norder'],r0,th0)
-        mdl=n.abs(shapelets.img.constructModel(bvals,d['coeffs'],d['xc'],d['size']))
-    print 'done'
-
+    
     #generate random UV samples
     print 'generating random UV samples...',
     sys.stdout.flush()
     nsamples=(100,4)
-    scalef=[100.,70.]
+    scalef=[.1,.07]
     uu=n.random.random(nsamples)*scalef[0]
     vv=n.random.random(nsamples)*scalef[1]
     print 'done'
 
-    #cycle through samples and compute the DFT(inverse/scale factor?)
+    #generate inverse basis functions
+    #compute the UV complex correlation from coefficients and basis functions
     print 'generating UV correlations...',
     sys.stdout.flush()
-    rx=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
-    ry=n.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-    rx0=n.reshape(n.tile(rx,len(ry)),(len(ry),len(rx)))
-    ry0=n.reshape(n.tile(ry,len(rx)),(len(rx),len(ry)))
-    corr=shapelets.dft.computeUV(mdl,rx0.T,ry0,uu,vv)
+    if d['mode'].startswith('herm'):
+        bfs=shapelets.shapelet.ftHermiteBasis(d['beta'],d['norder'])
+        corr=shapelets.uv.computeHermiteUV(bfs,d['coeffs'],uu,vv)
+    elif d['mode'].startswith('lag'):
+        bfs=shapelets.shapelet.ftLaguerreBasis(d['beta'],d['norder'])
+        corr=shapelets.uv.computeLaguerreUV(bfs,d['coeffs'],uu,vv)
     print 'done'
 
     #return an array of complex amplitudes

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-FITS Image Plotter
+Generic Image Plotter
 """
 
 import sys,os
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     o.set_usage('%prog [options] FITS_IMAGE')
     o.set_description(__doc__)
     o.add_option('-r', '--region', dest='region', default=None,
-        help='Region of image plot, (xmin,xmax,ymin,ymax), default: None')
+        help='Region of image plot, (ymin,ymax,xmin,xmax), default: None')
     opts, args = o.parse_args(sys.argv[1:])
 
     fn=args[0]

@@ -16,9 +16,9 @@ if __name__ == '__main__':
     o.set_usage('%prog [options] FITS_IMAGE')
     o.set_description(__doc__)
     o.add_option('-r', '--region', dest='region', default=None,
-        help='Region of image to decompose into shapelets, (xmin,xmax,ymin,ymax), default: None')
+        help='Region of image to decompose into shapelets, (ymin,ymax,xmin,xmax), default: None')
     o.add_option('-N', '--noise_region', dest='nregion', default=None,
-        help='Region of image to use to create a noise map, if set to None the entire image is used with an iterative process to clip out the tails, (xmin,xmax,ymin,ymax), default: None')
+        help='Region of image to use to create a noise map, if set to None the entire image is used with an iterative process to clip out the tails, (ymin,ymax,xmin,xmax), default: None')
     o.add_option('-n', '--nmax', dest='nmax', default='5',
         help='Size of coefficient dimensions for minimization fit, can be two values i.e. \'4,5\', default: 5')
     o.add_option('-B', '--brute', dest='brute', default=10, type='int',

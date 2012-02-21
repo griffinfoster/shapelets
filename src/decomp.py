@@ -85,6 +85,9 @@ def chi2PolarFunc(params,nmax,im,nm):
     beta=params[0]
     xc=params[1]
     yc=params[2]
+    if beta<0.:
+        print 'warning: beta going negative, setting to 0.0'
+        beta=0.
     print 'beta: %f\txc: (%f,%f)'%(beta,xc,yc)
 
     size=im.shape
@@ -107,6 +110,9 @@ def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
     nm: noise map
     """
     beta=params[0]
+    if beta<0.:
+        print 'warning: beta going negative, setting to 0.0'
+        beta=0.
     print 'beta: %f'%(beta)
 
     size=im.shape
@@ -147,6 +153,12 @@ def chi2Func(params,nmax,im,nm):
     betaY=params[1]
     xc=params[2]
     yc=params[3]
+    if betaX<0.:
+        print 'warning: betaX going negative, setting to 0.0'
+        betaX=0.
+    if betaY<0.:
+        print 'warning: betaY going negative, setting to 0.0'
+        betaY=0.
     print 'beta: (%f,%f)\txc: (%f,%f)'%(betaX,betaY,xc,yc)
     
     size=im.shape
@@ -171,6 +183,12 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
     """
     betaX=params[0]
     betaY=params[1]
+    if betaX<0.:
+        print 'warning: betaX going negative, setting to 0.0'
+        betaX=0.
+    if betaY<0.:
+        print 'warning: betaY going negative, setting to 0.0'
+        betaY=0.
     print 'beta: (%f,%f)'%(betaX,betaY)
     size=im.shape
     #shift the (0,0) point to the centroid
