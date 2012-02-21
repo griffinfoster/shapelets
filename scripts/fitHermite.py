@@ -83,7 +83,7 @@ if __name__ == '__main__':
     x0=optimize.brute(shapelets.decomp.chi2nmaxFunc,[n.s_[n0:n1:1]],args=(im,nm,[xopt[0],xopt[1]],[xopt[2],xopt[3]]),finish=None)
     nmax0=[int(x0),int(x0)]
     print '\tDone'
-    print 'Using n_max: [%i,%i]'%(nmax0[0],nmax[1])
+    print 'Using n_max: [%i,%i]'%(nmax0[0],nmax0[1])
 
     #plot: data, model, residual: model-data, coeffs
     p.subplot(221)
