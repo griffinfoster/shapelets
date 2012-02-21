@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Plot a shapelet coefficient file
+Plot a Hermite shapelet coefficient file
 """
 
 import sys,os

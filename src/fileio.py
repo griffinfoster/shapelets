@@ -26,7 +26,7 @@ def readImg(fn,gs=False):
     if gs: im=im.convert("L")
     return n.asarray(im)
 
-def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,info=''):
+def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,mode='hermite',info=''):
     """Write hermite coeffs and meta data to a pickle file
     fn: output file name
     coeffs: set of coefficients for Hermite polynomials
@@ -34,8 +34,11 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,info=''):
     size: size in pixels of image
     beta: characteristic beta values
     norder: order of polynomials
+    mode: basis function mode
+    info: extra metadata space
     """
     d={ 'coeffs':coeffs,
+        'mode':mode,
         'xc':xc,
         'size':size,
         'beta':beta,
@@ -54,7 +57,7 @@ def readHermiteCoeffs(fn):
     fh.close()
     return d
 
-def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,info=''):
+def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,mode='laguerre',info=''):
     """Write Lageurre coeffs and meta data to a pickle file
     fn: output file name
     coeffs: set of coefficients for Lageurre polynomials
@@ -62,8 +65,11 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,info=''):
     size: size in pixels of image
     beta: characteristic beta value
     norder: max order of polynomials
+    mode: basis function mode
+    info: extra metadata space
     """
     d={ 'coeffs':coeffs,
+        'mode':mode,
         'xc':xc,
         'size':size,
         'beta':beta,
@@ -81,6 +87,10 @@ def readLageurreCoeffs(fn):
     d=pickle.load(fh)
     fh.close()
     return d
+
+def readCoeffs(fn):
+    """At present readLageurreCoeffs and readHermiteCoeffs do the same operations"""
+    return readHermiteCoeffs(fn)
 
 if __name__ == "__main__":
     print "fileio"

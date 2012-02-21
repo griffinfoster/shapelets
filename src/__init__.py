@@ -1,5 +1,5 @@
 """
 A module interface to shapelet functions
 """
-import decomp, fileio, img, shapelet
+import decomp, dft, fileio, img, shapelet, uv
 

@@ -44,14 +44,16 @@ def polarDimBasis(n0,m0,beta=1.):
     exp0=lambda r,th: norm * r**(n.abs(m0)) * b0((r**2.)/(beta**2.)) * n.exp(-.5*(r**2.)/(beta**2.)) * n.exp(-1j*m0*th)
     return exp0
 
-def polarArray(xc,size):
-    """Return arrays of shape 'size' with radius and theta values centered on xc"""
+def polarArray(xc,size,rot=0.):
+    """Return arrays of shape 'size' with radius and theta values centered on xc
+    rot: radians in which to rotate the shapelet
+    """
     rx=n.array(range(0,size[1]),dtype=float)-xc[0]
     ry=n.array(range(0,size[0]),dtype=float)-xc[1]
     rx=n.reshape(n.tile(rx,size[0]),(size[0],size[1]))
     ry=n.reshape(n.tile(ry,size[1]),(size[1],size[0]))
     rExp = lambda x,y: n.sqrt(n.square(x) + n.square(y))
-    thExp = lambda x,y: n.arctan2(y,x)
+    thExp = lambda x,y: n.arctan2(y,x)+rot
     return rExp(rx,ry.T), thExp(rx,ry.T)
 
 def xy2rth(rx,ry):
@@ -62,6 +64,17 @@ def xy2rth(rx,ry):
     thExp = lambda x,y: n.arctan2(y,x)
     return rExp(rx0,ry0.T), thExp(rx0,ry0.T)
 
+def rth2xy(r,th):
+    """Convert r,theta array pair to an x,y pair"""
+    x=r*n.cos(th)
+    y=r*n.sin(th)
+    return x,y
+
+def xyRotate(rx,ry,rot=0.):
+    """Apply a rotation(radians) to an set of X,Y coordinates"""
+    r0,th0=xy2rth(rx,ry)
+    th0+=rot
+    return rth2xy(r0,th0)
 
 def computeBasisPolar(b,r,th):
     """Compute the values of a Polar Basis function b over the R and Theta range"""
@@ -77,7 +90,30 @@ def computeBasis2d(b,rx,ry):
 
 def computeBasis2dAtom(b,x,y):
     """Compute the basis function b in the position (x,y)"""
-    return b[0]([x])*b[1]([y])
+    return (b[0]([x])*b[1]([y]))[0]
+
+def ftHermiteBasis(beta,nmax):
+    """generate a set of Fourier Transformed Hermite basis functions
+    nmax: maximum decompisition order
+    beta: characteristic size of the shapelet
+    """
+    bfs=[]
+    for x in range(nmax[0]):
+        for y in range(nmax[1]):
+            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
+    return bfs
+
+def ftLaguerreBasis(beta,nmax):
+    """generate a set of Fourier Transformed Laguerre basis functions
+    nmax: maximum decompisition order
+    beta: characteristic size of the shapelet
+    """
+    bfs=[]
+    for nn in range(nmax):
+        for mm in n.arange(-1*nn,nn+1):
+            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
+                bfs.append(polarDimBasis(nn,mm,beta=(1./beta)))
+    return bfs
 
 if __name__ == "__main__":
     print 'shapelets main'
