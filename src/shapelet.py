@@ -28,17 +28,19 @@ def basis2d(n0,n1,beta=[1.,1.]):
     exp1=lambda x: beta[1] * b[1](x) * n.exp(-.5*(x**2))
     return [exp0,exp1]
 
-def dimBasis2d(n0,n1,beta=[1.,1.]):
-    """2d dimensional Cartesian basis function of characteristic size beta"""
+def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.]):
+    """2d dimensional Cartesian basis function of characteristic size beta
+    phs: additional phase factor, used in the Fourier Transform"""
     b=hermite2d(n0,n1)
     b[0]*=(beta[0]**(-.5))*(((2**n0)*(n.pi**(.5))*scipy.factorial(n0))**(-.5))
-    exp0=lambda x: b[0](x/beta[0]) * n.exp(-.5*((x/beta[0])**2))
+    exp0=lambda x: b[0](x/beta[0]) * n.exp(-.5*((x/beta[0])**2)) * phs[0]
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(n.pi**(.5))*scipy.factorial(n1))**(-.5))
-    exp1=lambda x: b[1](x/beta[1]) * n.exp(-.5*((x/beta[1])**2))
+    exp1=lambda x: b[1](x/beta[1]) * n.exp(-.5*((x/beta[1])**2)) * phs[1]
     return [exp0,exp1]
 
-def polarDimBasis(n0,m0,beta=1.):
-    """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta"""
+def polarDimBasis(n0,m0,beta=1.,phs=1.):
+    """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta
+    phs: additional phase factor, used in the Fourier Transform"""
     b0=laguerre(n0,m0)
     norm=(((-1.)**((n0-n.abs(m0))/2))/(beta**(n.abs(m0)+1)))*((float(scipy.factorial(int((n0-n.abs(m0))/2)))/float(scipy.factorial(int((n0+n.abs(m0))/2))))**.5)
     exp0=lambda r,th: norm * r**(n.abs(m0)) * b0((r**2.)/(beta**2.)) * n.exp(-.5*(r**2.)/(beta**2.)) * n.exp(-1j*m0*th)
@@ -89,7 +91,7 @@ def computeBasis2d(b,rx,ry):
     return n.outer(b[0](rx),b[1](ry))
 
 def computeBasis2dAtom(b,x,y):
-    """Compute the basis function b in the position (x,y)"""
+    """Compute the basis function b in the position (x,y), x and y can be arrays"""
     return (b[0]([x])*b[1]([y]))[0]
 
 def ftHermiteBasis(beta,nmax):
@@ -100,7 +102,7 @@ def ftHermiteBasis(beta,nmax):
     bfs=[]
     for x in range(nmax[0]):
         for y in range(nmax[1]):
-            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
+            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**x,1j**y]))
     return bfs
 
 def ftLaguerreBasis(beta,nmax):
@@ -112,7 +114,7 @@ def ftLaguerreBasis(beta,nmax):
     for nn in range(nmax):
         for mm in n.arange(-1*nn,nn+1):
             if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                bfs.append(polarDimBasis(nn,mm,beta=(1./beta)))
+                bfs.append(polarDimBasis(nn,mm,beta=(1./beta),phs=(1j**nn * 1j**mm)))
     return bfs
 
 if __name__ == "__main__":

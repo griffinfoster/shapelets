@@ -171,7 +171,7 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
     """
     betaX=params[0]
     betaY=params[1]
-    print betaX,betaY
+    print 'beta: (%f,%f)'%(betaX,betaY)
     size=im.shape
     #shift the (0,0) point to the centroid
     rx=n.array(range(0,size[0]),dtype=float)-xc
