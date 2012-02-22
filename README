@@ -7,7 +7,7 @@
                       |_|
 =======================================================
 Created: 15.02.12
-Last Modified: 15.02.12
+Last Modified: 22.02.12
 Contact: griffin.foster@gmail.com
 
 Python module for fitting images(FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using
@@ -30,9 +30,9 @@ Usage:
 =======================================================
 The scripts directory contains a number scripts for fitting.
 
-testHermite.py: fits beta, and the centroid to use Hermite polynomials(Cartesian)
-testLaguerre.py: fits beta, and the centroid to use Laguerre polynomials(Polar)
+fitHermite.py: fits beta, and the centroid to use Hermite polynomials(Cartesian)
+fitLaguerre.py: fits beta, and the centroid to use Laguerre polynomials(Polar)
 fitBeta.py: fits only beta, uses a fixed centroid, both sets of polynomials can be fit for
-
+solveShapelet.py: solve the shapelet decomposition for a given centroid, and beta (Polar or Cartesian)
 plot*.py: scripts for plotting coefficient files, shapelet basis functions and images
 
