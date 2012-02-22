@@ -25,8 +25,8 @@ if __name__ == '__main__':
         help='Set the shapelet mode, cartesian or polar, default: cartesian')
     o.add_option('-n', '--nmax', dest='nmax', default='5',
         help='Size of coefficient dimensions for minimization fit, can be two values i.e. \'4,5\', default: 5')
-    o.add_option('-B', '--brute', dest='brute', default=10, type='int',
-        help='Maximum basis function order to use when running brute force method, default: 10')
+    o.add_option('-B', '--brute', dest='brute', default=15, type='int',
+        help='Maximum basis function order to use when running brute force method, default: 15')
     o.add_option('-b', '--beta', dest='beta', default=None, type='float',
         help='Set an initial beta value, default: None, guess is made based on image size')
     o.add_option('-o', '--outfile', dest='ofn', default='temp.coeff',
@@ -35,14 +35,15 @@ if __name__ == '__main__':
         help='Relative error in parameters acceptable for convergence, default: 0.0001')
     o.add_option('--ftol', dest='ftol', default=0.0001, type='float',
         help='Relative error in chi^2 function acceptable for convergence, default: 0.0001')
-    o.add_option('--maxiter', dest='maxiter', default=10, type='int',
-        help='Maximum number of iterations to perform, default: 10')
+    o.add_option('--maxiter', dest='maxiter', default=250, type='int',
+        help='Maximum number of iterations to perform, default: 250')
     o.add_option('--max', dest='max_pos', action="store_true", default=False,
         help='Override centroid position to be the position of max intensity')
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
-    im=shapelets.fileio.readFITS(args[0])
+    im,hdrInfo=shapelets.fileio.readFITS(args[0],hdr=True)
+    print hdrInfo
     im0=im
     extent=[0,im.shape[0],0,im.shape[1]]
     if not (opts.region is None):
@@ -68,7 +69,7 @@ if __name__ == '__main__':
         xc=[im.shape[0]/2.,im.shape[1]/2.]
     else:
         xc=map(float,opts.xc.split(','))
-        #corect for position if using only a regionof the image
+        #correct for position if using only a region of the image
         xc[0]-=extent[0]
         xc[1]-=extent[2]
     if opts.max_pos: xc=shapelets.img.maxPos(im)
@@ -102,6 +103,17 @@ if __name__ == '__main__':
         nmax0=int(x0)
         print 'Using n_max:%i'%nmax0
 
+        #compute RA/DEC
+        if (opts.region is None):
+            xoffset=0
+            yoffset=0
+        else:
+            xoffset=extent[2]
+            yoffset=extent[0]
+        ora,odec=shapelets.img.xc2radec(xc,hdrInfo,offset=[xoffset,yoffset])
+        obeta=shapelets.img.beta2size(beta0,hdrInfo)
+        print 'RA: %f\t DEC: %f\t BETA: (%f,%f)'%(ora,odec,obeta[0],obeta[1])
+
         #plot: data, model, residual: model-data, coeffs
         p.subplot(221)
         p.title('Image')
@@ -134,7 +146,7 @@ if __name__ == '__main__':
 
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,nmax0,info=ifn)
+        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,nmax0,pos=[ora,odec,obeta[0],obeta[1]],info=ifn)
         
         p.show()
     else:
@@ -156,6 +168,17 @@ if __name__ == '__main__':
         print '\tDone'
         print 'Using n_max: [%i,%i]'%(nmax0[0],nmax0[1])
 
+        #compute RA/DEC
+        if (opts.region is None):
+            xoffset=0
+            yoffset=0
+        else:
+            xoffset=extent[2]
+            yoffset=extent[0]
+        ora,odec=shapelets.img.xc2radec(xc,hdrInfo,offset=[xoffset,yoffset])
+        obeta=shapelets.img.beta2size(beta0,hdrInfo)
+        print 'RA: %f\t DEC: %f\t BETA: (%f,%f)'%(ora,odec,obeta[0],obeta[1])
+        
         #plot: data, model, residual: model-data, coeffs
         p.subplot(221)
         p.title('Image')

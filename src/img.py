@@ -60,7 +60,7 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
         niter=0
         if maxiter==0:conv=True #compute the noise on the unclipped image
         while not conv:
-            print niter
+            #print niter
             im=n.ma.masked_greater(im,sigma*n.abs(mode0))
             im=n.ma.masked_less(im,-1*sigma*n.abs(mode0))
             if n.abs(n.std(im)-std0)/std0 < tol: conv=True
@@ -104,4 +104,20 @@ def polarCoeffImg(coeffs,nmax):
                 im[mm+nmax-1,nn]=coeffs[cnt]
                 cnt+=1
     return im
+
+def xc2radec(xc,hdr,offset=[0.,0.]):
+    """Return the RA,DEC position for a centroid (x,y) pair based on FITS header
+    offset: x,y offset from full image
+    """
+    ra=(hdr['raPix']-(offset[0]+xc[0]))*hdr['dra']+hdr['ra']
+    dec=(hdr['decPix']-(offset[1]+xc[1]))*hdr['ddec']+hdr['dec']
+    return ra,dec
+
+def beta2size(beta,hdr):
+    """Convert a beta pixel size to celestial size
+    """
+    if type(beta)==list:
+        return [n.abs(beta[0]*hdr['dra']),n.abs(beta[1]*hdr['ddec'])]
+    else:
+        return [n.abs(beta*hdr['dra']),n.abs(beta*hdr['ddec'])]
 

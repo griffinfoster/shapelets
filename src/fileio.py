@@ -10,12 +10,15 @@ import cPickle as pickle
 
 import img
 
-def readFITS(fn):
+def readFITS(fn,hdr=False):
     """Read a FITS image file and returns a numpy array
     """
     hdulist=pf.open(fn)
     im=hdulist[0].data
-    return im[0,0]
+    hdulist.close()
+    if hdr:
+        return im[0,0],getFITSInfo(fn)
+    else: return im[0,0]
 
 def readImg(fn,gs=False):
     """Read an image file using PIL libraries and return a numpy array
@@ -26,7 +29,30 @@ def readImg(fn,gs=False):
     if gs: im=im.convert("L")
     return n.asarray(im)
 
-def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,mode='hermite',info=''):
+def getFITSInfo(fn):
+    """Parse the FITS header for pointing and pixel size information
+    return [RA,DEC], pixel resolution, pixel of [RA,DEC]
+    """
+    hdulist=pf.open(fn)
+    hdr=hdulist[0].header
+    #CTYPE1: RA---[PROJ], projection SIN/TAN/ARC
+    #CRVAL1: reference RA position in degrees
+    #CRPIX1: location of reference pixel
+    #CDELT1: delta RA/pixel size in degrees
+    #CTYPE2: DEC--[PROJ], projection SIN/TAN/ARC
+    #CRVAL2: reference DEC position in degrees
+    #CRPIX2: location of reference pixel
+    #CDELT2: delta DEC/pixel size in degrees
+    ra=hdr['CRVAL1']
+    dra=hdr['CDELT1']
+    raPix=hdr['CRPIX1']
+    dec=hdr['CRVAL2']
+    ddec=hdr['CDELT2']
+    decPix=hdr['CRPIX2']
+    hdulist.close()
+    return {'ra':ra,'dec':dec,'dra':dra,'ddec':ddec,'raPix':raPix,'decPix':decPix}
+
+def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,pos=[0.,0.,0.,0.],mode='hermite',info=''):
     """Write hermite coeffs and meta data to a pickle file
     fn: output file name
     coeffs: set of coefficients for Hermite polynomials
@@ -35,6 +61,7 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,mode='hermite',info=''):
     beta: characteristic beta values
     norder: order of polynomials
     mode: basis function mode
+    pos: 4 element array of RA,DEC and sale size from FITS header
     info: extra metadata space
     """
     d={ 'coeffs':coeffs,
@@ -43,6 +70,10 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,norder,mode='hermite',info=''):
         'size':size,
         'beta':beta,
         'norder':norder,
+        'ra':pos[0],
+        'dec':pos[1],
+        'dra':pos[2],
+        'ddec':pos[2],
         'info': info }
     fh=open(fn,'wb')
     pickle.dump(d,fh)
@@ -57,7 +88,7 @@ def readHermiteCoeffs(fn):
     fh.close()
     return d
 
-def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,mode='laguerre',info=''):
+def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,pos=[0.,0.,0.,0.],mode='laguerre',info=''):
     """Write Lageurre coeffs and meta data to a pickle file
     fn: output file name
     coeffs: set of coefficients for Lageurre polynomials
@@ -66,6 +97,7 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,mode='laguerre',info=''):
     beta: characteristic beta value
     norder: max order of polynomials
     mode: basis function mode
+    pos: 4 element array of RA,DEC and sale size from FITS header
     info: extra metadata space
     """
     d={ 'coeffs':coeffs,
@@ -74,6 +106,10 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,norder,mode='laguerre',info=''):
         'size':size,
         'beta':beta,
         'norder':norder,
+        'ra':pos[0],
+        'dec':pos[1],
+        'dra':pos[2],
+        'ddec':pos[2],
         'info': info }
     fh=open(fn,'wb')
     pickle.dump(d,fh)

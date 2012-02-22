@@ -21,8 +21,8 @@ if __name__ == '__main__':
         help='Region of image to use to create a noise map, if set to None the entire image is used with an iterative process to clip out the tails, (ymin,ymax,xmin,xmax), default: None')
     o.add_option('-n', '--nmax', dest='nmax', default='5',
         help='Size of coefficient dimensions for minimization fit, can be two values i.e. \'4,5\', default: 5')
-    o.add_option('-B', '--brute', dest='brute', default=10, type='int',
-        help='Maximum basis function order to use when running brute force method, default: 10')
+    o.add_option('-B', '--brute', dest='brute', default=15, type='int',
+        help='Maximum basis function order to use when running brute force method, default: 15')
     o.add_option('-b', '--beta', dest='beta', default=None, type='float',
         help='Set an initial beta value, default: None, guess is made based on image size')
     o.add_option('-o', '--outfile', dest='ofn', default='tempCart.coeff',
@@ -31,14 +31,16 @@ if __name__ == '__main__':
         help='Relative error in parameters acceptable for convergence, default: 0.0001')
     o.add_option('--ftol', dest='ftol', default=0.0001, type='float',
         help='Relative error in chi^2 function acceptable for convergence, default: 0.0001')
-    o.add_option('--maxiter', dest='maxiter', default=10, type='int',
-        help='Maximum number of iterations to perform, default: 10')
+    o.add_option('--maxiter', dest='maxiter', default=250, type='int',
+        help='Maximum number of iterations to perform, default: 250')
     o.add_option('--frac', dest='frac', default=1., type='float',
         help='Fractional radius of image to fit the centroid within, default: 1, the entire image')
+    o.add_option('--max', dest='max_pos', action="store_true", default=False,
+        help='Override centroid position to be the position of max intensity as initial guess')
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
-    im=shapelets.fileio.readFITS(args[0])
+    im,hdrInfo=shapelets.fileio.readFITS(args[0],hdr=True)
     im0=im
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
@@ -58,8 +60,9 @@ if __name__ == '__main__':
     else:
         beta=[opts.beta,opts.beta]
     beta=shapelets.decomp.initBeta2(im,frac=.2)
-    #xc=shapelets.img.centroid(im)
-    xc=shapelets.img.maxPos(im)
+    
+    xc=shapelets.img.centroid(im)
+    if opts.max_pos: xc=shapelets.img.maxPos(im)
     
     nmax=opts.nmax.split(',')
     if len(nmax)==1:
@@ -84,6 +87,17 @@ if __name__ == '__main__':
     nmax0=[int(x0),int(x0)]
     print '\tDone'
     print 'Using n_max: [%i,%i]'%(nmax0[0],nmax0[1])
+
+    #compute RA/DEC
+    if (opts.region is None):
+        xoffset=0
+        yoffset=0
+    else:
+        xoffset=extent[2]
+        yoffset=extent[0]
+    ora,odec=shapelets.img.xc2radec(xc0,hdrInfo,offset=[xoffset,yoffset])
+    obeta=shapelets.img.beta2size(beta0,hdrInfo)
+    print 'RA: %f\t DEC: %f\t BETA: (%f,%f)'%(ora,odec,obeta[0],obeta[1])
 
     #plot: data, model, residual: model-data, coeffs
     p.subplot(221)
@@ -116,7 +130,7 @@ if __name__ == '__main__':
     
     ofn=opts.ofn
     print 'Writing to file:',ofn
-    shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc0,im.shape,beta0,nmax0,info=ifn)
+    shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc0,im.shape,beta0,nmax0,pos=[ora,odec,obeta[0],obeta[1]],info=ifn)
     
     p.show()
 

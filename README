@@ -36,3 +36,6 @@ fitBeta.py: fits only beta, uses a fixed centroid, both sets of polynomials can 
 solveShapelet.py: solve the shapelet decomposition for a given centroid, and beta (Polar or Cartesian)
 plot*.py: scripts for plotting coefficient files, shapelet basis functions and images
 
+Example Test:
+=======================================================
+scripts/fitBeta.py -r 170,335,195,309 --max data/lba_cyg_250.ms.CORRECTED_DATA.channel.1ch.fits
