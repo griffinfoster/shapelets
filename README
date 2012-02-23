@@ -13,14 +13,16 @@ Contact: griffin.foster@gmail.com
 Python module for fitting images(FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using
 Hermite and Laguerre polynomials.
 
-Required Python Modules:
+Recommended Python Modules:
 =======================================================
+    *distutils
     *matplotlib/pylab
     *numpy
     *scipy
     *pyfits
     *PIL
     *cPickle (usually a standard install with python)
+    *pyrap
 
 Install:
 =======================================================

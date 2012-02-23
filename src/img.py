@@ -60,7 +60,7 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
         niter=0
         if maxiter==0:conv=True #compute the noise on the unclipped image
         while not conv:
-            #print niter
+            print niter
             im=n.ma.masked_greater(im,sigma*n.abs(mode0))
             im=n.ma.masked_less(im,-1*sigma*n.abs(mode0))
             if n.abs(n.std(im)-std0)/std0 < tol: conv=True

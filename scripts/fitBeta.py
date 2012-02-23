@@ -210,7 +210,7 @@ if __name__ == '__main__':
         
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,nmax0,info=ifn)
+        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,nmax0,pos=[ora,odec,obeta[0],obeta[1]],info=ifn)
         
         p.show()
 
