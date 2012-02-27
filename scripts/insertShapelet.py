@@ -37,8 +37,8 @@ if __name__ == '__main__':
     print 'generating UV correlations...',
     sys.stdout.flush()
     if d['mode'].startswith('herm'):
-        #bfs=shapelets.shapelet.ftHermiteBasis([(n.pi/180.)*d['dra'],(n.pi/180.)*d['ddec']],d['norder'])
-        bfs=shapelets.shapelet.ftHermiteBasis([d['dra'],d['ddec']],d['norder'])
+        bfs=shapelets.shapelet.ftHermiteBasis([(n.pi/180.)*d['dra'],(n.pi/180.)*d['ddec']],d['norder'])
+        #bfs=shapelets.shapelet.ftHermiteBasis([d['dra'],d['ddec']],d['norder'])
     elif d['mode'].startswith('lag'):
         bfs=shapelets.shapelet.ftLaguerreBasis(d['dra'],d['norder'])
     print 'done'
@@ -57,13 +57,10 @@ if __name__ == '__main__':
         cc=299792458.0
         u=uvwData[:,0]
         v=uvwData[:,1]
-        w=uvwData[:,2]
         u=n.reshape(u,(uvwData.shape[0],1))
         v=n.reshape(v,(uvwData.shape[0],1))
-        w=n.reshape(v,(uvwData.shape[0],1))
         u=(u*freqs.T)/cc
         v=(v*freqs.T)/cc
-        w=(w*freqs.T)/cc
         sw.close()
 
         #compute the UV complex correlation from coefficients and basis functions
