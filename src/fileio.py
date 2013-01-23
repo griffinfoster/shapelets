@@ -29,6 +29,14 @@ def readImg(fn,gs=False):
     if gs: im=im.convert("L")
     return n.asarray(im)
 
+def readArrayPkl(fn):
+    """Read a pickle file, expected format is a NxM numpy array
+    """
+    fh=open(fn,'rb')
+    im=pickle.load(fh)
+    fh.close()
+    return im
+
 def getFITSInfo(fn):
     """Parse the FITS header for pointing and pixel size information
     return [RA,DEC], pixel resolution, pixel of [RA,DEC]

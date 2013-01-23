@@ -80,7 +80,7 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
         noisemap=n.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
         return noisemap
 
-def constructModel(bvals,coeffs,size):
+def constructModel(bvals,coeffs,xc,size):
     """Construct a model image based on the basis functions values, centroid position xc, and coeffs on an image
     with size dimensions
     """

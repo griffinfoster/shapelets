@@ -19,6 +19,8 @@ if __name__ == '__main__':
         help='Put in polar shapelet mode, default: False (cartesian)')
     o.add_option('-b', '--beta', dest='beta', default='1.0',
         help='Characteristic shapelet size, if using Hermite can use 2 values i.e. \'2.1,3.5\' default: 1.0')
+    o.add_option('-s', '--savefig', dest='savefig', default=None,
+        help='Save the figure, requires filename')
     opts, args = o.parse_args(sys.argv[1:])
 
     nmax=opts.nmax.split(',')
@@ -79,6 +81,8 @@ if __name__ == '__main__':
         p.colorbar()
        
         p.suptitle('Lageurre Basis Functions (Polar)')
+        if not (opts.savefig is None):
+            p.savefig(opts.savefig)
         p.show()
     
     else:
@@ -101,6 +105,9 @@ if __name__ == '__main__':
         p.ylim(ymin=len(ry)*nmax[1],ymax=0)
         p.title('Hermite Basis Functions (Cartesian)')
         p.colorbar()
+
+        if not (opts.savefig is None):
+            p.savefig(opts.savefig)
 
         p.show()
 

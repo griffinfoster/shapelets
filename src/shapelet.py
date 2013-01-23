@@ -102,8 +102,9 @@ def ftHermiteBasis(beta,nmax):
     bfs=[]
     for x in range(nmax[0]):
         for y in range(nmax[1]):
+            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x),1j**(y)]))
             #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x+1),1j**(y+1)]))
-            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
+            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
     return bfs
 
 def ftLaguerreBasis(beta,nmax):

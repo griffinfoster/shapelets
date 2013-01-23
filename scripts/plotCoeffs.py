@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 Plot a Hermite shapelet coefficient file
+
+ToDo:
+    Fourier Transform for Polar Shapelets
+    Understand size,res rescaling in the Fourier Transform
 """
 
 import sys,os
@@ -26,19 +30,26 @@ if __name__ == '__main__':
         #print ry
         #print len(rx),len(ry)
         bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],rx,ry)
-        mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['size'])
+        mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['xc'],d['size'])
         
         #ft
-        xsize=(float(len(ry))/float(len(rx)))*1./n.abs(rx[0]-rx[1]) #!!!
-        ysize=(float(len(rx))/float(len(ry)))*1./n.abs(ry[0]-ry[1]) #!!!
-        #print xsize,ysize
-        xres=(float(len(ry))/float(len(rx)))*1./n.abs(rx[0]-rx[-1]) #!!!
-        yres=(float(len(rx))/float(len(ry)))*1./n.abs(ry[0]-ry[-1]) #!!!
-        #print xres,yres
-        xmin=xres*(rx[0]+.5)
-        ymin=yres*(ry[0]+.5)
-        uu=n.arange(0,xsize+xres,xres)+xmin
-        vv=n.arange(0,ysize+yres,yres)+ymin
+        usize=(float(len(ry))/float(len(rx)))*1./n.abs(rx[0]-rx[1]) #!!!
+        vsize=(float(len(rx))/float(len(ry)))*1./n.abs(ry[0]-ry[1]) #!!!
+        #print usize,vsize
+        ures=(float(len(ry))/float(len(rx)))*1./n.abs(rx[0]-rx[-1]) #!!!
+        vres=(float(len(rx))/float(len(ry)))*1./n.abs(ry[0]-ry[-1]) #!!!
+        #print ures,vres
+        umin=ures*(rx[0]+.5)
+        vmin=vres*(ry[0]+.5)
+        uu=n.arange(0,usize+ures,ures)+umin
+        vv=n.arange(0,vsize+vres,vres)+vmin
+
+        usize=5.*1./n.abs(rx[0]-rx[1]) #!!!
+        vsize=5.*1./n.abs(ry[0]-ry[1]) #!!!
+        ures=5.*1./n.abs(rx[0]-rx[-1]) #!!!
+        vres=5.*1./n.abs(ry[0]-ry[-1]) #!!!
+        uu=n.arange(-.5*usize,.5*usize,ures)
+        vv=n.arange(-.5*vsize,.5*vsize,vres)
         #print len(uu),len(vv)
         #print uu,vv
         bvals=[]
@@ -46,7 +57,7 @@ if __name__ == '__main__':
         for bf in basis:
             bvals.append(shapelets.shapelet.computeBasis2d(bf,uu,vv).flatten())
         bm=n.array(bvals)
-        mdl_ft=shapelets.img.constructModel(bm.transpose(),d['coeffs'],[len(uu),len(vv)])
+        mdl_ft=shapelets.img.constructModel(bm.transpose(),d['coeffs'],d['xc'],[len(uu),len(vv)])
         #mdl_ft=mdl_ft.real
 
         #uu=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
@@ -73,35 +84,35 @@ if __name__ == '__main__':
         cim=n.concatenate((cimR,cimI),axis=1)
         p.suptitle('Laguerre')
     
-    p.subplot(131)
+    p.subplot(231)
     p.title('Model')
     p.imshow(mdl)
     p.text(d['xc'][1],d['xc'][0],'+')
     #p.colorbar()
 
-    #p.subplot(234)
-    #mdl_fft2=n.fft.fft2(mdl)
-    #axis0_shift=int(mdl_fft2.shape[0]/2)
-    #axis1_shift=int(mdl_fft2.shape[1]/2)
-    #mdl_fft2=n.concatenate((mdl_fft2[axis0_shift:,:],mdl_fft2[:axis0_shift,:]),axis=0)
-    #mdl_fft2=n.concatenate((mdl_fft2[:,axis1_shift:],mdl_fft2[:,:axis1_shift]),axis=1)
-    #p.imshow(n.abs(mdl_fft2))
+    p.subplot(234)
+    mdl_fft2=n.fft.fft2(mdl)
+    axis0_shift=int(mdl_fft2.shape[0]/2)
+    axis1_shift=int(mdl_fft2.shape[1]/2)
+    mdl_fft2=n.concatenate((mdl_fft2[axis0_shift:,:],mdl_fft2[:axis0_shift,:]),axis=0)
+    mdl_fft2=n.concatenate((mdl_fft2[:,axis1_shift:],mdl_fft2[:,:axis1_shift]),axis=1)
+    p.imshow(n.abs(mdl_fft2))
 
-    p.subplot(132)
+    p.subplot(232)
     p.title('Fourier Transform')
-    p.imshow(mdl_ft.real)
-    #p.imshow(n.abs(mdl_ft))
+    #p.imshow(mdl_ft.real)
+    p.imshow(n.abs(mdl_ft))
     #p.colorbar()
 
-    #p.subplot(235)
-    #mdl_ft_fft2=n.fft.fft2(mdl_ft)
-    #axis0_shift=int(mdl_ft_fft2.shape[0]/2)
-    #axis1_shift=int(mdl_ft_fft2.shape[1]/2)
-    #mdl_ft_fft2=n.concatenate((mdl_ft_fft2[axis0_shift:,:],mdl_ft_fft2[:axis0_shift,:]),axis=0)
-    #mdl_ft_fft2=n.concatenate((mdl_ft_fft2[:,axis1_shift:],mdl_ft_fft2[:,:axis1_shift]),axis=1)
-    #p.imshow(n.abs(mdl_ft_fft2))
+    p.subplot(235)
+    mdl_ft_fft2=n.fft.fft2(mdl_ft)
+    axis0_shift=int(mdl_ft_fft2.shape[0]/2)
+    axis1_shift=int(mdl_ft_fft2.shape[1]/2)
+    mdl_ft_fft2=n.concatenate((mdl_ft_fft2[axis0_shift:,:],mdl_ft_fft2[:axis0_shift,:]),axis=0)
+    mdl_ft_fft2=n.concatenate((mdl_ft_fft2[:,axis1_shift:],mdl_ft_fft2[:,:axis1_shift]),axis=1)
+    p.imshow(n.abs(mdl_ft_fft2))
 
-    p.subplot(133)
+    p.subplot(233)
     p.title('Coefficents')
     if d['mode'].startswith('herm'):
         coeffs=n.reshape(d['coeffs'],d['norder'])

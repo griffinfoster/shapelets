@@ -7,7 +7,8 @@ import shapelet
 
 def computeHermiteUV(bfs,coeffs,uu,vv):
     """Compute the correlation value for an array of U,V postions based on a set of Hermite 
-    shapelet basis functions and coefficients"""
+    shapelet basis functions and coefficients
+    """
     dshape=uu.shape
     uu=uu.flatten()
     vv=vv.flatten()

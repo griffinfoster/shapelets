@@ -7,8 +7,9 @@ import sys,os
 import distutils.dir_util
 import numpy as n
 import shapelets
-
 import pyrap.tables as pt
+
+import pylab as p
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -33,16 +34,35 @@ if __name__ == '__main__':
     d=shapelets.fileio.readCoeffs(opts.cfn)
     
     #generate inverse basis functions
-    print 'RA: %f\t DEC: %f\t BETA: (%f,%f)\t INVERSE: (%f,%f)'%(d['ra'],d['dec'],d['dra'],d['ddec'],1./d['dra'],1./d['ddec'])
-    print 'generating UV correlations...',
+    print 'RA: %f\t DEC: %f\t DRA: %f\t DDEC: %f\t'%(d['ra'],d['dec'],d['dra'],d['ddec'])
+    beta=[d['beta'][0]*d['dra'],d['beta'][1]*d['ddec']]
+    print 'BETA: (%f,%f)\t INVERSE: (%f,%f)'%(beta[0],beta[1],1./beta[0],1./beta[1])
+    print 'generating UV Basis Functions...',
     sys.stdout.flush()
     if d['mode'].startswith('herm'):
-        bfs=shapelets.shapelet.ftHermiteBasis([(n.pi/180.)*d['dra'],(n.pi/180.)*d['ddec']],d['norder'])
-        #bfs=shapelets.shapelet.ftHermiteBasis([d['dra'],d['ddec']],d['norder'])
+        bfs=shapelets.shapelet.ftHermiteBasis([(n.pi/180.)*beta[0],(n.pi/180.)*beta[1]],d['norder'])
     elif d['mode'].startswith('lag'):
         bfs=shapelets.shapelet.ftLaguerreBasis(d['dra'],d['norder'])
     print 'done'
-    
+
+    #image->uv transform limits
+    dra=d['dra']*n.pi/180.
+    ddec=d['ddec']*n.pi/180.
+    rx=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
+    ry=n.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
+    usize=(float(len(ry))/float(len(rx)))*1./(n.abs(rx[0]-rx[1])*dra) #!!!
+    vsize=(float(len(rx))/float(len(ry)))*1./(n.abs(ry[0]-ry[1])*ddec) #!!!
+    #print usize,vsize
+    ures=(float(len(ry))/float(len(rx)))*1./(n.abs(rx[0]-rx[-1])*dra) #!!!
+    vres=(float(len(rx))/float(len(ry)))*1./(n.abs(ry[0]-ry[-1])*ddec) #!!!
+    #print ures,vres
+    umin=ures*(rx[0]+.5)
+    vmin=vres*(ry[0]+.5)
+    uu=n.arange(0,usize+ures,ures)+umin
+    vv=n.arange(0,vsize+vres,vres)+vmin
+    uRange=[uu[0],uu[-1]]
+    vRange=[vv[0],vv[-1]]
+
     data_column=opts.data_column.upper()
     for fn in args:
         print 'working on:',fn
@@ -59,24 +79,45 @@ if __name__ == '__main__':
         v=uvwData[:,1]
         u=n.reshape(u,(uvwData.shape[0],1))
         v=n.reshape(v,(uvwData.shape[0],1))
+        #convert u,v to units of wavelengths
         u=(u*freqs.T)/cc
         v=(v*freqs.T)/cc
         sw.close()
+
+        #bvals=[]
+        #for bf in bfs:
+        #    bvals.append(shapelets.shapelet.computeBasis2d(bf,uu,vv).flatten())
+        #bm=n.array(bvals)
+        #mdl_ft=shapelets.img.constructModel(bm.transpose(),d['coeffs'],[len(uu),len(vv)])
+        #p.imshow(n.abs(mdl_ft))
+        #p.show()
+        
+        #filter out UV samples
+        uvFilter=((u>uRange[0]) & (u<uRange[1]) & ((v>vRange[0]) & (v<vRange[1])))
+        uvIndex=n.argwhere(uvFilter)
+        u0=u[uvFilter]
+        v0=v[uvFilter]
 
         #compute the UV complex correlation from coefficients and basis functions
         print '\tcomputing new UV visibilities...',
         sys.stdout.flush()
         if d['mode'].startswith('herm'):
-            sVis=shapelets.uv.computeHermiteUV(bfs,d['coeffs'],u,v)
+            sVis=shapelets.uv.computeHermiteUV(bfs,d['coeffs'],u0,v0)
         elif d['mode'].startswith('lag'):
             sVis=shapelets.uv.computeLaguerreUV(bfs,d['coeffs'],u,v)
         print 'done'
-        
+
+        #uv coverage plot
+        p.scatter(u0,v0,c=n.abs(sVis)/n.max(n.abs(sVis)),edgecolor='none')
+        p.show()
+
         vis=ms.col(data_column)
         visData=vis.getcol()
         visShape=visData.shape
         newVis=n.zeros_like(visData)
-        newVis[:,:,0]=sVis  #only writing to the XX data
+        xxVis=newVis[:,:,0]
+        xxVis[uvIndex[:,0],0]=sVis
+        newVis[:,:,0]=xxVis     #only writing to the XX data
         
         if opts.mode.startswith('add'): newVis+=visData
         if opts.overwrite:
