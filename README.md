@@ -1,12 +1,11 @@
 shapelets
 ===
 
-Created: 15.02.12 
+Created: 15.02.12  
 Last Modified: 23.01.13  
 Contact: griffin.foster@gmail.com  
 
-Python module for fitting images (FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using
-Hermite and Laguerre polynomials.  
+Python module for fitting images (FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
 
 Based on the shapelet framework developed in [Shapelets: I. A Method for Image Analysis](http://arxiv.org/abs/astro-ph/0105178) and the [IDL shapelet software](http://www.astro.caltech.edu/~rjm/shapelets/). 
 
