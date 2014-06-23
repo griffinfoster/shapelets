@@ -1,0 +1,9 @@
+*.pyc
+build
+dist
+shapelets.egg-info
+temp.coeff
+
+.settings
+.project
+.pydevproject
