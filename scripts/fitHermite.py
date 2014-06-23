@@ -3,9 +3,8 @@
 Testing script to check shaplet decomposition and plotting
 """
 
-import sys,os
-import pyfits as pf
-import numpy as n
+import sys
+import numpy as np
 import pylab as p
 from scipy import optimize
 import shapelets
@@ -83,7 +82,7 @@ if __name__ == '__main__':
     n0=1
     n1=opts.brute+1
     print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
-    x0=optimize.brute(shapelets.decomp.chi2nmaxFunc,[n.s_[n0:n1:1]],args=(im,nm,[xopt[0],xopt[1]],[xopt[2],xopt[3]]),finish=None)
+    x0=optimize.brute(shapelets.decomp.chi2nmaxFunc,[np.s_[n0:n1:1]],args=(im,nm,[xopt[0],xopt[1]],[xopt[2],xopt[3]]),finish=None)
     nmax0=[int(x0),int(x0)]
     print '\tDone'
     print 'Using n_max: [%i,%i]'%(nmax0[0],nmax0[1])
@@ -107,8 +106,8 @@ if __name__ == '__main__':
     
     p.subplot(222)
     p.title('Model')
-    rx=n.array(range(0,im.shape[0]),dtype=float)-xc0[0]
-    ry=n.array(range(0,im.shape[1]),dtype=float)-xc0[1]
+    rx=np.array(range(0,im.shape[0]),dtype=float)-xc0[0]
+    ry=np.array(range(0,im.shape[1]),dtype=float)-xc0[1]
     bvals=shapelets.decomp.genBasisMatrix(beta0,nmax0,rx,ry)
     coeffs=shapelets.decomp.solveCoeffs(bvals,im)
     mdl=shapelets.img.constructModel(bvals,coeffs,xc0,im.shape)
@@ -124,7 +123,7 @@ if __name__ == '__main__':
 
     p.subplot(224)
     p.title('Coefficents')
-    sqCoeffs=n.reshape(coeffs,nmax0)
+    sqCoeffs=np.reshape(coeffs,nmax0)
     p.pcolor(sqCoeffs)
     p.colorbar()
     

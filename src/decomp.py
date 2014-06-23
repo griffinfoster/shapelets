@@ -4,7 +4,7 @@ Functions for decomposing an image into basis functions using a Least Squares Es
 Implementation of "Statistics in Theory and Practice", Lupton, Ch. 11
 """
 
-import numpy as n
+import numpy as np
 import shapelet,img
 
 def initBeta(im,frac=.25,nmax=5):
@@ -34,11 +34,11 @@ def genPolarBasisMatrix(beta,nmax,r,th):
     """
     bvals=[]
     for nn in range(nmax):
-        for mm in n.arange(-1*nn,nn+1):
+        for mm in np.arange(-1*nn,nn+1):
             if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
                 bf=shapelet.polarDimBasis(nn,mm,beta=beta)
                 bvals.append(shapelet.computeBasisPolar(bf,r,th).flatten())
-    bm=n.array(bvals)
+    bm=np.array(bvals)
     return bm.transpose()
 
 def genBasisMatrix(beta,nmax,rx,ry):
@@ -53,7 +53,7 @@ def genBasisMatrix(beta,nmax,rx,ry):
         for y in range(nmax[1]):
             bf=shapelet.dimBasis2d(x,y,beta=beta)
             bvals.append(shapelet.computeBasis2d(bf,rx,ry).flatten())
-    bm=n.array(bvals)
+    bm=np.array(bvals)
     return bm.transpose()
 
 def solveCoeffs(m,im):
@@ -64,12 +64,12 @@ def solveCoeffs(m,im):
     m: n x k matrix of the basis functions for each pixel
     im: image of size n pixels
     returns theta_hat, a size k array of basis function coefficents"""
-    #im_flat=n.reshape(im,im.shape[0]*im.shape[1],1)
+    #im_flat=np.reshape(im,im.shape[0]*im.shape[1],1)
     im_flat=im.flatten()
-    mTm=n.dot(m.T,m)                    #matrix multiply m with it's transpose
-    mTm_inv=n.linalg.inv(mTm)           #invert the k x k matrix
-    mTm_inv_mT=n.dot(mTm_inv,m.T)       #matrix multiply the result with the transpose of m
-    theta_hat=n.dot(mTm_inv_mT,im_flat) #compute the coefficents for the basis functions
+    mTm=np.dot(m.T,m)                    #matrix multiply m with it's transpose
+    mTm_inv=np.linalg.inv(mTm)           #invert the k x k matrix
+    mTm_inv_mT=np.dot(mTm_inv,m.T)       #matrix multiply the result with the transpose of m
+    theta_hat=np.dot(mTm_inv_mT,im_flat) #compute the coefficents for the basis functions
     return theta_hat
 
 def chi2PolarFunc(params,nmax,im,nm):
@@ -94,8 +94,8 @@ def chi2PolarFunc(params,nmax,im,nm):
     r,th=shapelet.polarArray([xc,yc],size)
     bvals=genPolarBasisMatrix(beta,nmax,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=n.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    mdl=np.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
     """Function which is to be minimized in the chi^2 analysis for Polar shapelets
@@ -118,8 +118,8 @@ def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
     size=im.shape
     bvals=genPolarBasisMatrix(beta,nmax,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=n.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    mdl=np.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2nmaxPolarFunc(params,im,nm,beta,xc):
     """
@@ -136,8 +136,8 @@ def chi2nmaxPolarFunc(params,im,nm,beta,xc):
     r,th=shapelet.polarArray(xc,size)
     bvals=genPolarBasisMatrix(beta,nmax,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=n.abs(img.constructModel(bvals,coeffs,xc,size))
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    mdl=np.abs(img.constructModel(bvals,coeffs,xc,size))
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2Func(params,nmax,im,nm):
     """Function which is to be minimized in the chi^2 analysis
@@ -163,13 +163,13 @@ def chi2Func(params,nmax,im,nm):
     
     size=im.shape
     #shift the (0,0) point to the centroid
-    rx=n.array(range(0,size[0]),dtype=float)-xc
-    ry=n.array(range(0,size[1]),dtype=float)-yc
+    rx=np.array(range(0,size[0]),dtype=float)-xc
+    ry=np.array(range(0,size[1]),dtype=float)-yc
 
     bvals=genBasisMatrix([betaX,betaY],nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2betaFunc(params,xc,yc,nmax,im,nm):
     """Function which is to be minimized in the chi^2 analysis
@@ -192,13 +192,13 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
     print 'beta: (%f,%f)'%(betaX,betaY)
     size=im.shape
     #shift the (0,0) point to the centroid
-    rx=n.array(range(0,size[0]),dtype=float)-xc
-    ry=n.array(range(0,size[1]),dtype=float)-yc
+    rx=np.array(range(0,size[0]),dtype=float)-xc
+    ry=np.array(range(0,size[1]),dtype=float)-yc
 
     bvals=genBasisMatrix([betaX,betaY],nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2xcFunc(params,beta,nmax,im,nm):
     """Function which is to be minimized in the chi^2 analysis
@@ -215,13 +215,13 @@ def chi2xcFunc(params,beta,nmax,im,nm):
     print xc,yc
     size=im.shape
     #shift the (0,0) point to the centroid
-    rx=n.array(range(0,size[0]),dtype=float)-xc
-    ry=n.array(range(0,size[1]),dtype=float)-yc
+    rx=np.array(range(0,size[0]),dtype=float)-xc
+    ry=np.array(range(0,size[1]),dtype=float)-yc
 
     bvals=genBasisMatrix(beta,nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2nmaxFunc(params,im,nm,beta,xc):
     """
@@ -236,13 +236,13 @@ def chi2nmaxFunc(params,im,nm,beta,xc):
     nmax=[params,params]
     size=im.shape
     #shift the (0,0) point to the centroid
-    rx=n.array(range(0,size[0]),dtype=float)-xc[0]
-    ry=n.array(range(0,size[1]),dtype=float)-xc[1]
+    rx=np.array(range(0,size[0]),dtype=float)-xc[0]
+    ry=np.array(range(0,size[1]),dtype=float)-xc[1]
 
     bvals=genBasisMatrix(beta,nmax,rx,ry)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,xc,size)
-    return n.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
+    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 if __name__ == "__main__":
     print 'decomp main'

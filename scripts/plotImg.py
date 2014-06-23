@@ -3,9 +3,7 @@
 Generic Image Plotter
 """
 
-import sys,os
-import pyfits as pf
-import numpy as n
+import sys
 import pylab as p
 import shapelets
 

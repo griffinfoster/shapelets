@@ -4,11 +4,10 @@ Write coeff file
 """
 
 import pyfits as pf
-import numpy as n
+import numpy as np
 from PIL import Image
 import cPickle as pickle
 
-import img
 
 def readFITS(fn,hdr=False):
     """Read a FITS image file and returns a numpy array
@@ -27,7 +26,7 @@ def readImg(fn,gs=False):
     """
     im=Image.open(fn)
     if gs: im=im.convert("L")
-    return n.asarray(im)
+    return np.asarray(im)
 
 def readArrayPkl(fn):
     """Read a pickle file, expected format is a NxM numpy array
