@@ -2,9 +2,7 @@
 Image manipulation functions
 """
 
-import numpy as n
-import pylab as p
-import time
+import numpy as np
 #shapelet functions
 import decomp, shapelet
 
@@ -25,8 +23,8 @@ def centroid(im,region=None):
     #shift minimum to zero
     im=im-im.min()
     m00 = im.sum()
-    m10=n.multiply(n.arange(im.shape[1]),im)
-    m01=n.multiply(n.arange(im.shape[0]),n.rot90(im))
+    m10=np.multiply(np.arange(im.shape[1]),im)
+    m01=np.multiply(np.arange(im.shape[0]),np.rot90(im))
     m10=m10.sum()
     m01=m01.sum()
     return [m10/m00+offset[0], m01/m00+offset[1]]
@@ -39,7 +37,7 @@ def maxPos(im, region=None):
     else: offset=[0,0]
     #shift minimum to zero
     im=im-im.min()
-    maxpos=n.argwhere(im==n.max(im))[0]
+    maxpos=np.argwhere(im==np.max(im))[0]
     return [maxpos[0]+offset[0],maxpos[1]+offset[1]]
 
 def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
@@ -47,54 +45,54 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
     until the variation between iterations is within the tolerance or the maximum number of iterations is reached.
     If region is set then the noise is computed for a region and applied to the entire map.
     Masks can be included to ignore portions of the image."""
-    im=n.ma.array(im)
+    im=np.ma.array(im)
     if region is None:
         if not (masks is None):
             for m in masks:
-                im[m[0]:m[1],m[2]:m[3]]=n.ma.masked
-        mean0=n.mean(im)
-        median0=n.median(im)
+                im[m[0]:m[1],m[2]:m[3]]=np.ma.masked
+        mean0=np.mean(im)
+        median0=np.median(im)
         mode0=2.5*median0-1.5*mean0
-        std0=n.std(im)
+        std0=np.std(im)
         conv=False
         niter=0
         if maxiter==0:conv=True #compute the noise on the unclipped image
         while not conv:
             print niter
-            im=n.ma.masked_greater(im,sigma*n.abs(mode0))
-            im=n.ma.masked_less(im,-1*sigma*n.abs(mode0))
-            if n.abs(n.std(im)-std0)/std0 < tol: conv=True
-            elif n.ma.count_masked(im)>im.size*.5: conv=True
+            im=np.ma.masked_greater(im,sigma*np.abs(mode0))
+            im=np.ma.masked_less(im,-1*sigma*np.abs(mode0))
+            if np.abs(np.std(im)-std0)/std0 < tol: conv=True
+            elif np.ma.count_masked(im)>im.size*.5: conv=True
             else:
-                std0=n.std(im)
-                mode0=2.5*n.median(im)-1.5*n.mean(im)
+                std0=np.std(im)
+                mode0=2.5*np.median(im)-1.5*np.mean(im)
             niter+=1
             if not(maxiter is None) and niter==maxiter: break
-        noisemap=n.ones((im.shape[0],im.shape[1]))*n.std(im)
+        noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
         return noisemap
     else:
         im_region=selPxRange(im,region)
-        std0=n.std(im_region)
-        mean0=n.mean(im_region)
-        noisemap=n.ones_like(im)
-        noisemap=n.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
+        std0=np.std(im_region)
+        mean0=np.mean(im_region)
+        noisemap=np.ones_like(im)
+        noisemap=np.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
         return noisemap
 
 def constructModel(bvals,coeffs,xc,size):
     """Construct a model image based on the basis functions values, centroid position xc, and coeffs on an image
     with size dimensions
     """
-    model_img=n.dot(bvals,coeffs)
-    model_img=n.reshape(model_img,size)
+    model_img=np.dot(bvals,coeffs)
+    model_img=np.reshape(model_img,size)
     return model_img
 
 def polarCoeffImg(coeffs,nmax):
     """Return 2D array of coeffs for Laguerre components for plotting
     """
-    im=n.zeros((nmax*2,nmax))
+    im=np.zeros((nmax*2,nmax))
     cnt=0
     for nn in range(nmax):
-        for mm in n.arange(-1*nn,nn+1):
+        for mm in np.arange(-1*nn,nn+1):
             if nn%2==0 and mm%2==0:
                 im[mm+nmax-1,nn]=coeffs[cnt]
                 cnt+=1
@@ -115,7 +113,7 @@ def beta2size(beta,hdr):
     """Convert a beta pixel size to celestial size
     """
     if type(beta)==list:
-        return [n.abs(beta[0]*hdr['dra']),n.abs(beta[1]*hdr['ddec'])]
+        return [np.abs(beta[0]*hdr['dra']),np.abs(beta[1]*hdr['ddec'])]
     else:
-        return [n.abs(beta*hdr['dra']),n.abs(beta*hdr['ddec'])]
+        return [np.abs(beta*hdr['dra']),np.abs(beta*hdr['ddec'])]
 

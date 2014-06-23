@@ -3,8 +3,8 @@
 Plot a set of shapelet basis functions
 """
 
-import sys,os
-import numpy as n
+import sys
+import numpy as np
 import pylab as p
 import shapelets
 
@@ -33,19 +33,19 @@ if __name__ == '__main__':
 
     xlim=[-5,5]
     ylim=[-5,5]
-    rx=n.arange(xlim[0],xlim[1],.1)
-    ry=n.arange(ylim[0],ylim[1],.1)
+    rx=np.arange(xlim[0],xlim[1],.1)
+    ry=np.arange(ylim[0],ylim[1],.1)
 
     if opts.polar:
         nmax=nmax[0]
         beta=beta[0]
         print 'polar shapelets'
-        fullImgReal=n.zeros((len(ry)*nmax*2,len(rx)*nmax))
-        fullImgImag=n.zeros((len(ry)*nmax*2,len(rx)*nmax))
+        fullImgReal=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
+        fullImgImag=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         yOffset=len(ry)*nmax
         r,th=shapelets.shapelet.xy2rth(rx,ry)
         for nn in range(nmax):
-            for mm in n.arange(-1*nn,nn+1):
+            for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
                     bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta)
                     bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
@@ -57,26 +57,26 @@ if __name__ == '__main__':
         p.subplot(121)
         p.imshow(fullImgReal)
         for nn in range(nmax):
-            for mm in n.arange(-1*nn,nn+1):
+            for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
                     p.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
         p.xlim(xmin=0,xmax=len(rx)*nmax)
         p.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
-        p.xticks(n.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
-        p.yticks(n.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-n.arange(nmax*2+1))
+        p.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
+        p.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
         p.title('Real')
         p.colorbar()
         
         p.subplot(122)
         p.imshow(fullImgImag)
         for nn in range(nmax):
-            for mm in n.arange(-1*nn,nn+1):
+            for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
                     p.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
         p.xlim(xmin=0,xmax=len(rx)*nmax)
         p.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
-        p.xticks(n.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
-        p.yticks(n.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-n.arange(nmax*2+1))
+        p.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
+        p.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
         p.title('Imaginary')
         p.colorbar()
        
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     else:
         print 'cartesian shapelets'
         fig=p.figure()
-        fullImg=n.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
+        fullImg=np.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
                 bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta)
@@ -100,8 +100,8 @@ if __name__ == '__main__':
             for n1 in range(nmax[0]):
                 p.fill([n1*len(rx),(n1+1)*len(rx),(n1+1)*len(rx),n1*len(rx)],[n0*len(ry),n0*len(ry),(n0+1)*len(ry),(n0+1)*len(ry)],fill=False)
         p.xlim(xmin=0,xmax=len(rx)*nmax[0])
-        p.xticks(n.arange(0,len(rx)*nmax[0],len(rx))+(len(rx)/2),range(nmax[0]))
-        p.yticks(n.arange(0,len(ry)*nmax[1],len(ry))+(len(ry)/2),range(nmax[1]))
+        p.xticks(np.arange(0,len(rx)*nmax[0],len(rx))+(len(rx)/2),range(nmax[0]))
+        p.yticks(np.arange(0,len(ry)*nmax[1],len(ry))+(len(ry)/2),range(nmax[1]))
         p.ylim(ymin=len(ry)*nmax[1],ymax=0)
         p.title('Hermite Basis Functions (Cartesian)')
         p.colorbar()

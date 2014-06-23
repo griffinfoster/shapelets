@@ -3,9 +3,9 @@
 Replace measurement set vis data with a shapelet model
 """
 
-import sys,os
+import sys
 import distutils.dir_util
-import numpy as n
+import numpy as np
 import shapelets
 import pyrap.tables as pt
 
@@ -40,26 +40,26 @@ if __name__ == '__main__':
     print 'generating UV Basis Functions...',
     sys.stdout.flush()
     if d['mode'].startswith('herm'):
-        bfs=shapelets.shapelet.ftHermiteBasis([(n.pi/180.)*beta[0],(n.pi/180.)*beta[1]],d['norder'])
+        bfs=shapelets.shapelet.ftHermiteBasis([(np.pi/180.)*beta[0],(np.pi/180.)*beta[1]],d['norder'])
     elif d['mode'].startswith('lag'):
         bfs=shapelets.shapelet.ftLaguerreBasis(d['dra'],d['norder'])
     print 'done'
 
     #image->uv transform limits
-    dra=d['dra']*n.pi/180.
-    ddec=d['ddec']*n.pi/180.
-    rx=n.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
-    ry=n.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-    usize=(float(len(ry))/float(len(rx)))*1./(n.abs(rx[0]-rx[1])*dra) #!!!
-    vsize=(float(len(rx))/float(len(ry)))*1./(n.abs(ry[0]-ry[1])*ddec) #!!!
+    dra=d['dra']*np.pi/180.
+    ddec=d['ddec']*np.pi/180.
+    rx=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
+    ry=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
+    usize=(float(len(ry))/float(len(rx)))*1./(np.abs(rx[0]-rx[1])*dra) #!!!
+    vsize=(float(len(rx))/float(len(ry)))*1./(np.abs(ry[0]-ry[1])*ddec) #!!!
     #print usize,vsize
-    ures=(float(len(ry))/float(len(rx)))*1./(n.abs(rx[0]-rx[-1])*dra) #!!!
-    vres=(float(len(rx))/float(len(ry)))*1./(n.abs(ry[0]-ry[-1])*ddec) #!!!
+    ures=(float(len(ry))/float(len(rx)))*1./(np.abs(rx[0]-rx[-1])*dra) #!!!
+    vres=(float(len(rx))/float(len(ry)))*1./(np.abs(ry[0]-ry[-1])*ddec) #!!!
     #print ures,vres
     umin=ures*(rx[0]+.5)
     vmin=vres*(ry[0]+.5)
-    uu=n.arange(0,usize+ures,ures)+umin
-    vv=n.arange(0,vsize+vres,vres)+vmin
+    uu=np.arange(0,usize+ures,ures)+umin
+    vv=np.arange(0,vsize+vres,vres)+vmin
     uRange=[uu[0],uu[-1]]
     vRange=[vv[0],vv[-1]]
 
@@ -77,8 +77,8 @@ if __name__ == '__main__':
         cc=299792458.0
         u=uvwData[:,0]
         v=uvwData[:,1]
-        u=n.reshape(u,(uvwData.shape[0],1))
-        v=n.reshape(v,(uvwData.shape[0],1))
+        u=np.reshape(u,(uvwData.shape[0],1))
+        v=np.reshape(v,(uvwData.shape[0],1))
         #convert u,v to units of wavelengths
         u=(u*freqs.T)/cc
         v=(v*freqs.T)/cc
@@ -87,14 +87,14 @@ if __name__ == '__main__':
         #bvals=[]
         #for bf in bfs:
         #    bvals.append(shapelets.shapelet.computeBasis2d(bf,uu,vv).flatten())
-        #bm=n.array(bvals)
+        #bm=np.array(bvals)
         #mdl_ft=shapelets.img.constructModel(bm.transpose(),d['coeffs'],[len(uu),len(vv)])
-        #p.imshow(n.abs(mdl_ft))
+        #p.imshow(np.abs(mdl_ft))
         #p.show()
         
         #filter out UV samples
         uvFilter=((u>uRange[0]) & (u<uRange[1]) & ((v>vRange[0]) & (v<vRange[1])))
-        uvIndex=n.argwhere(uvFilter)
+        uvIndex=np.argwhere(uvFilter)
         u0=u[uvFilter]
         v0=v[uvFilter]
 
@@ -108,13 +108,13 @@ if __name__ == '__main__':
         print 'done'
 
         #uv coverage plot
-        p.scatter(u0,v0,c=n.abs(sVis)/n.max(n.abs(sVis)),edgecolor='none')
+        p.scatter(u0,v0,c=np.abs(sVis)/np.max(np.abs(sVis)),edgecolor='none')
         p.show()
 
         vis=ms.col(data_column)
         visData=vis.getcol()
         visShape=visData.shape
-        newVis=n.zeros_like(visData)
+        newVis=np.zeros_like(visData)
         xxVis=newVis[:,:,0]
         xxVis[uvIndex[:,0],0]=sVis
         newVis[:,:,0]=xxVis     #only writing to the XX data

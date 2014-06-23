@@ -3,9 +3,8 @@
 Fit a set of shapelets to a image with a fixed centroid
 """
 
-import sys,os
-import pyfits as pf
-import numpy as n
+import sys
+import numpy as np
 import pylab as p
 from scipy import optimize
 import shapelets
@@ -97,7 +96,7 @@ if __name__ == '__main__':
         n0=1
         n1=opts.brute+1
         print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
-        x0=optimize.brute(shapelets.decomp.chi2nmaxPolarFunc,[n.s_[n0:n1:1]],args=(im,nm,beta0,xc),finish=None)
+        x0=optimize.brute(shapelets.decomp.chi2nmaxPolarFunc,[np.s_[n0:n1:1]],args=(im,nm,beta0,xc),finish=None)
         print '\tDone'
         
         nmax0=int(x0)
@@ -124,7 +123,7 @@ if __name__ == '__main__':
         p.title('Model')
         bvals=shapelets.decomp.genPolarBasisMatrix(beta0,nmax0,r0,th0)
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-        mdl=n.abs(shapelets.img.constructModel(bvals,coeffs,xc,im.shape))
+        mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,xc,im.shape))
         p.imshow(mdl)
         p.text(xc[1],xc[0],'+')
         p.colorbar()
@@ -139,8 +138,8 @@ if __name__ == '__main__':
         p.title('Coefficents')
         cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax0)
         cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax0)
-        cimI=n.fliplr(cimI)
-        cim=n.concatenate((cimR,cimI),axis=1)
+        cimI=np.fliplr(cimI)
+        cim=np.concatenate((cimR,cimI),axis=1)
         p.pcolor(cim)
         p.colorbar()
 
@@ -163,7 +162,7 @@ if __name__ == '__main__':
         n0=1
         n1=opts.brute+1
         print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
-        x0=optimize.brute(shapelets.decomp.chi2nmaxFunc,[n.s_[n0:n1:1]],args=(im,nm,beta0,xc),finish=None)
+        x0=optimize.brute(shapelets.decomp.chi2nmaxFunc,[np.s_[n0:n1:1]],args=(im,nm,beta0,xc),finish=None)
         nmax0=[int(x0),int(x0)]
         print '\tDone'
         print 'Using n_max: [%i,%i]'%(nmax0[0],nmax0[1])
@@ -187,8 +186,8 @@ if __name__ == '__main__':
         
         p.subplot(222)
         p.title('Model')
-        rx=n.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        ry=n.array(range(0,im.shape[1]),dtype=float)-xc[1]
+        rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+        ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
         bvals=shapelets.decomp.genBasisMatrix(beta0,nmax0,rx,ry)
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=shapelets.img.constructModel(bvals,coeffs,xc,im.shape)
@@ -204,7 +203,7 @@ if __name__ == '__main__':
 
         p.subplot(224)
         p.title('Coefficents')
-        sqCoeffs=n.reshape(coeffs,nmax0)
+        sqCoeffs=np.reshape(coeffs,nmax0)
         p.pcolor(sqCoeffs)
         p.colorbar()
         

@@ -3,9 +3,8 @@
 Testing script to check polar shaplet decomposition and plotting
 """
 
-import sys,os
-import pyfits as pf
-import numpy as n
+import sys
+import numpy as np
 import pylab as p
 from scipy import optimize
 import shapelets
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     n0=1
     n1=opts.brute+1
     print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
-    x0=optimize.brute(shapelets.decomp.chi2nmaxPolarFunc,[n.s_[n0:n1:1]],args=(im,nm,beta0,xc0),finish=None)
+    x0=optimize.brute(shapelets.decomp.chi2nmaxPolarFunc,[np.s_[n0:n1:1]],args=(im,nm,beta0,xc0),finish=None)
     print '\tDone'
     
     nmax0=int(x0)
@@ -102,7 +101,7 @@ if __name__ == '__main__':
     r0,th0=shapelets.shapelet.polarArray(xc0,im.shape)
     bvals=shapelets.decomp.genPolarBasisMatrix(beta0,nmax0,r0,th0)
     coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-    mdl=n.abs(shapelets.img.constructModel(bvals,coeffs,xc0,im.shape))
+    mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,xc0,im.shape))
     p.imshow(mdl)
     p.text(xc0[1],xc0[0],'+')
     p.colorbar()
@@ -117,8 +116,8 @@ if __name__ == '__main__':
     p.title('Coefficents')
     cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax0)
     cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax0)
-    cimI=n.fliplr(cimI)
-    cim=n.concatenate((cimR,cimI),axis=1)
+    cimI=np.fliplr(cimI)
+    cim=np.concatenate((cimR,cimI),axis=1)
     p.pcolor(cim)
     p.colorbar()
 

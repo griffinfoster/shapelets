@@ -3,11 +3,9 @@
 Return complex correlation data from a set of shapelet coefficients and UV positions
 """
 
-import sys,os
-import pyfits as pf
-import numpy as n
+import sys
+import numpy as np
 import pylab as p
-from scipy import optimize
 import shapelets
 
 if __name__ == '__main__':
@@ -26,8 +24,8 @@ if __name__ == '__main__':
     sys.stdout.flush()
     nsamples=(100,4)
     scalef=[.1,.07]
-    uu=n.random.random(nsamples)*scalef[0]
-    vv=n.random.random(nsamples)*scalef[1]
+    uu=np.random.random(nsamples)*scalef[0]
+    vv=np.random.random(nsamples)*scalef[1]
     print 'done'
 
     #generate inverse basis functions
