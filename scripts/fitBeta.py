@@ -51,7 +51,7 @@ if __name__ == '__main__':
 
     #noise map
     if opts.nregion is None:
-        nm=shapelets.img.estimateNoiseMap(im)
+        nm=shapelets.img.estimateNoiseMap(im, maxiter=1)
     else:
         nextent=map(int, opts.nregion.split(','))
         nm=shapelets.img.estimateNoiseMap(im0,region=nextent)
@@ -150,7 +150,13 @@ if __name__ == '__main__':
         p.show()
     else:
         print "beta0: (%f,%f)\tcentroid: (%f,%f)\tnmax: (%i,%i)"%(beta[0],beta[1],xc[0],xc[1],nmax[0]-1,nmax[1]-1)
-        
+
+        #print nm
+        #p.imshow(nm)
+        #p.colorbar()
+        #p.show()
+        #exit()
+
         #scipy optimize library downhill simplex minimization
         print 'Running minimization for beta and centroid...'
         xopt,fopt,iters,funcalls,warn,allvecs=optimize.fmin(shapelets.decomp.chi2betaFunc,[beta[0],beta[1]],args=(xc[0],xc[1],nmax,im,nm),xtol=opts.xtol,ftol=opts.ftol,maxiter=opts.maxiter,full_output=True,retall=True)

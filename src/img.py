@@ -68,7 +68,8 @@ def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
                 mode0=2.5*np.median(im)-1.5*np.mean(im)
             niter+=1
             if not(maxiter is None) and niter==maxiter: break
-        noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
+        #noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
+        noisemap=np.random.normal(np.mean(im),np.std(im),(im.shape[0],im.shape[1]))
         return noisemap
     else:
         im_region=selPxRange(im,region)
