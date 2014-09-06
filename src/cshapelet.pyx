@@ -72,7 +72,6 @@ cpdef genPolarBasisMatrix(double beta, int nmax,r,th, mask=None):
             if (nn%2==0 and abs(mm)%2==0) or (nn%2==1 and abs(mm)%2==1):
                 Ym = wrap_idx(Y_vec, mm)
                 # Using the fact that L_{n,-m} = L_{n, m}
-                print nn, mm, pos
                 if mm <= 0:
                     Lnm = polar_basis_L(r,nn,mm, beta=beta)
                     L_vec_tmp[abs(mm)] = Lnm

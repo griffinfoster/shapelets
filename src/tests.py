@@ -10,6 +10,7 @@ from numpy.testing import assert_allclose
 
 import fshapelet as fsh
 import shapelet as sh
+import cshapelet as csh
 import decomp
 
 
@@ -35,12 +36,19 @@ def test_polar_basis_numexpr():
     res1 = decomp.genPolarBasisMatrix(beta, nmax, r, th)
     yield assert_allclose, res0, res1, 1e-7, 1e-9
 
+def test_polar_basis_cython():
+    nmax = 10
+    res0 = csh.genPolarBasisMatrix(beta, nmax, r, th)
+    res1 = decomp.genPolarBasisMatrix(beta, nmax, r, th)
+    yield assert_allclose, res0, res1, 1e-7, 1e-9
+
 def test_polarArray():
     xc = (100., 200.)
     res0 = fsh.polarArray(xc, PB_DIM)
     res1 = sh.polarArray(xc, PB_DIM)
     yield assert_allclose, res0, res1, 1e-7, 1e-9
-    
+
+
 
 
 

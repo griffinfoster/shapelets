@@ -2,7 +2,6 @@
 Functions for Shapelet related operations
 """
 
-<<<<<<< HEAD
 import numpy as np
 from scipy.misc import factorial
 from scipy import special
