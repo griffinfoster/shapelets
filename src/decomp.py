@@ -6,6 +6,7 @@ Implementation of "Statistics in Theory and Practice", Lupton, Ch. 11
 
 import numpy as np
 import shapelet,img
+from fshapelet import genPolarBasisMatrix as fgenPolarBasisMatrix
 
 def initBeta(im,frac=.25,nmax=5):
     """Initial starting point for Beta, uses size of image to set limits, initial beta is set to the min beta
@@ -82,6 +83,7 @@ def chi2PolarFunc(params,nmax,im,nm):
     im: observed image
     nm: noise map
     """
+    import sys
     beta=params[0]
     xc=params[1]
     yc=params[2]
@@ -92,7 +94,7 @@ def chi2PolarFunc(params,nmax,im,nm):
 
     size=im.shape
     r,th=shapelet.polarArray([xc,yc],size)
-    bvals=genPolarBasisMatrix(beta,nmax,r,th)
+    bvals=fgenPolarBasisMatrix(beta,nmax,r,th)
     coeffs=solveCoeffs(bvals,im)
     mdl=np.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
