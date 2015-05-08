@@ -26,3 +26,7 @@ def ellipticity():
 
 #shear estimator
 
+if __name__ == "__main__":
+    print "testing measure"
+    #load precomputed shapelet coeffs
+    #compute measures

@@ -136,4 +136,9 @@ def readCoeffs(fn):
     return readHermiteCoeffs(fn)
 
 if __name__ == "__main__":
-    print "fileio"
+    print "testing fileio"
+    #load fits and read header
+    #load png
+    #load pre computed shapelet coeffs
+    #save pre computed shapelet coeffs
+

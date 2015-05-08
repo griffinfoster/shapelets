@@ -17,7 +17,7 @@ def laguerre(n0,m0):
     l0=special.genlaguerre(n=(n0-np.abs(m0))/2,alpha=np.abs(m0))
     return l0
 
-def rotMatrix(phi)
+def rotMatrix(phi):
     """2D Cartesian rotation matrix (radians)"""
     return np.matrix([[np.cos(phi),-1.*np.sin(phi)],[np.sin(phi),np.cos(phi)]])
 
@@ -136,5 +136,23 @@ def polar2cart():
 #    return bfs
 
 if __name__ == "__main__":
-    print 'shapelets main'
+    print 'testing shapelets'
+    #hermite2d(n0,n1):
+    #laguerre(n0,m0):
+    #rotMatrix(phi):
+    #xyRotate(rx,ry,rot=0.):
+    #basis2d(n0,n1,beta=[1.,1.],phi=0.):
+    #dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
+    #polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
+    #polarArray(xc,size,rot=0.):
+    #xy2rth(rx,ry):
+    #rth2xy(r,th):
+    #computeBasisPolar(b,r,th):
+    #computeBasisPolarAtom(b,r,th):
+    #computeBasis2d(b,rx,ry):
+    #computeBasis2dAtom(b,x,y):
+
+    #load precomputed polar coeffs
+    #convert to cart
+    #compare to precomputed cart coeffs
 

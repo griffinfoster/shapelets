@@ -245,5 +245,5 @@ def chi2nmaxFunc(params,im,nm,beta,xc):
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 if __name__ == "__main__":
-    print 'decomp main'
-
+    print 'testing decomp'
+    #call fitting scripts

@@ -118,3 +118,11 @@ def beta2size(beta,hdr):
     else:
         return [np.abs(beta*hdr['dra']),np.abs(beta*hdr['ddec'])]
 
+if __name__ == "__main__":
+    print 'testing img'
+    #call fitting scripts
+    #call plotting scripts
+
+    #xc2radec(xc,hdr,offset=[0.,0.]):
+    #beta2size(beta,hdr):
+
