@@ -31,7 +31,7 @@ def basis2d(n0,n1,beta=[1.,1.],phi=0.):
     exp0=lambda x: beta[0] * b[0](x) * np.exp(-.5*(x**2))
     b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)
     exp1=lambda x: beta[1] * b[1](x) * np.exp(-.5*(x**2))
-    return [m[0][0]*exp0+m[0][1]*exp1,m[1][0]*exp0+m[1][1]*exp1]
+    return np.dot(m,[exp0,exp1])
 
 def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
     """2d dimensional Cartesian basis function of characteristic size beta
@@ -44,7 +44,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
     exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2)) * phs[0]
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))
     exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2)) * phs[1]
-    return [m[0][0]*exp0+m[0][1]*exp1,m[1][0]*exp0+m[1][1]*exp1]
+    return np.dot(m,[exp0,exp1])
 
 def polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
     """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta
@@ -104,30 +104,36 @@ def computeBasis2dAtom(b,x,y):
     """Compute the basis function b in the position (x,y), x and y can be arrays"""
     return (b[0]([x])*b[1]([y]))[0]
 
-def ftHermiteBasis(beta,nmax):
-    """generate a set of Fourier Transformed Hermite basis functions
-    nmax: maximum decompisition order
-    beta: characteristic size of the shapelet
-    """
-    bfs=[]
-    for x in range(nmax[0]):
-        for y in range(nmax[1]):
-            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x),1j**(y)]))
-            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x+1),1j**(y+1)]))
-            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
-    return bfs
+#########################################################
 
-def ftLaguerreBasis(beta,nmax):
-    """generate a set of Fourier Transformed Laguerre basis functions
-    nmax: maximum decompisition order
-    beta: characteristic size of the shapelet
+def polar2cart():
+    """Convert a set of polar coefficients to Cartesian coefficients [manual eq. 1.27]
     """
-    bfs=[]
-    for nn in range(nmax):
-        for mm in np.arange(-1*nn,nn+1):
-            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                bfs.append(polarDimBasis(nn,mm,beta=(1./beta),phs=(1j**nn * 1j**mm)))
-    return bfs
+
+#def ftHermiteBasis(beta,nmax):
+#    """generate a set of Fourier Transformed Hermite basis functions
+#    nmax: maximum decompisition order
+#    beta: characteristic size of the shapelet
+#    """
+#    bfs=[]
+#    for x in range(nmax[0]):
+#        for y in range(nmax[1]):
+#            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x),1j**(y)]))
+#            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x+1),1j**(y+1)]))
+#            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
+#    return bfs
+#
+#def ftLaguerreBasis(beta,nmax):
+#    """generate a set of Fourier Transformed Laguerre basis functions
+#    nmax: maximum decompisition order
+#    beta: characteristic size of the shapelet
+#    """
+#    bfs=[]
+#    for nn in range(nmax):
+#        for mm in np.arange(-1*nn,nn+1):
+#            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
+#                bfs.append(polarDimBasis(nn,mm,beta=(1./beta),phs=(1j**nn * 1j**mm)))
+#    return bfs
 
 if __name__ == "__main__":
     print 'shapelets main'
