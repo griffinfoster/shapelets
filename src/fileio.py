@@ -6,6 +6,7 @@ Write coeff file
 import pyfits as pf
 import numpy as np
 import cPickle as pickle
+import sys
 
 #optional packages:
 try:
@@ -140,22 +141,31 @@ def readCoeffs(fn):
     return readHermiteCoeffs(fn)
 
 if __name__ == "__main__":
-    print "testing fileio"
+
+    print '============================================'
+    print 'Testing fileio module:'
+    print '============================================'
+    tc=0
+    te=0
     
     #read in a FITS file
+    tc+=1
     try:
         im,hdr=readFITS('../data/N6251_test.fits',hdr=True)
         print 'FITS header:', hdr
         print 'FITS image shape:', im.shape
     except:
-        print 'Test failed'
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
 
     #read in a PNG file
+    tc+=1
     try:
         im=readImg('../data/N6251_test.png',gs=True)
         print 'PNG shape:', im.shape
     except:
-        print 'Test failed'
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
 
     #load pre computed shapelet coeffs (pkl)
     #save pre computed shapelet coeffs (pkl)
@@ -166,3 +176,6 @@ if __name__ == "__main__":
     #load pre computed shapelet coeffs (hdf5)
     #save pre computed shapelet coeffs (hdf5)
 
+    print '============================================'
+    print '%i of %i tests succeeded'%(tc-te,tc)
+    print '============================================'
