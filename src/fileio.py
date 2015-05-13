@@ -5,8 +5,12 @@ Write coeff file
 
 import pyfits as pf
 import numpy as np
-from PIL import Image
 import cPickle as pickle
+
+#optional packages:
+try:
+    from PIL import Image
+except ImportError: pass
 
 
 def readFITS(fn,hdr=False):
@@ -137,8 +141,28 @@ def readCoeffs(fn):
 
 if __name__ == "__main__":
     print "testing fileio"
-    #load fits and read header
-    #load png
-    #load pre computed shapelet coeffs
-    #save pre computed shapelet coeffs
+    
+    #read in a FITS file
+    try:
+        im,hdr=readFITS('../data/N6251_test.fits',hdr=True)
+        print 'FITS header:', hdr
+        print 'FITS image shape:', im.shape
+    except:
+        print 'Test failed'
+
+    #read in a PNG file
+    try:
+        im=readImg('../data/N6251_test.png',gs=True)
+        print 'PNG shape:', im.shape
+    except:
+        print 'Test failed'
+
+    #load pre computed shapelet coeffs (pkl)
+    #save pre computed shapelet coeffs (pkl)
+
+    #load pre computed shapelet coeffs (ascii)
+    #save pre computed shapelet coeffs (ascii)
+
+    #load pre computed shapelet coeffs (hdf5)
+    #save pre computed shapelet coeffs (hdf5)
 

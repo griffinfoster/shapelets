@@ -4,7 +4,7 @@ Image manipulation functions
 
 import numpy as np
 #shapelet functions
-import decomp, shapelet
+import decomp
 
 def selPxRange(im,extent):
     """Select out the subimage within the extent region (xmin,xmax,ymin,ymax)"""

@@ -2,31 +2,37 @@ shapelets
 ===
 
 Created: 15.02.12  
-Last Modified: 23.01.13  
+Last Modified: 13.05.15  
 Contact: griffin.foster@gmail.com  
 
-Python module for fitting images (FITS,PNG,JPEG...) to shapelets, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
+A python module for fitting and decomposing images (FITS,PNG,JPEG...) into shapelet coefficients, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
 
 Based on the shapelet framework developed in [Shapelets: I. A Method for Image Analysis](http://arxiv.org/abs/astro-ph/0105178) and the [IDL shapelet software](http://www.astro.caltech.edu/~rjm/shapelets/). 
 
-Recommended Python Modules
+#### Required Python Modules
 ===
 
-* distutils 
-* matplotlib/pylab 
+* distutils (usually a standard install with python)
+* cPickle (usually a standard install with python) 
+* matplotlib 
 * numpy 
 * scipy 
 * pyfits 
-* PIL 
-* cPickle (usually a standard install with python) 
-* pyrap 
 
-Install
+#### Recommended Python Modules
 ===
 
-sudo python setup.py install  
+* PIL 
+* pyrap 
 
-Usage
+#### Install
+===
+
+```
+sudo python setup.py install  
+```
+
+#### Usage
 ===
 
 The scripts directory contains a number scripts for fitting.
@@ -37,8 +43,10 @@ The scripts directory contains a number scripts for fitting.
 * solveShapelet.py: solve the shapelet decomposition for a given centroid, and beta (Polar or Cartesian) 
 * plot*.py: scripts for plotting coefficient files, shapelet basis functions and images 
 
-Examples
+#### Examples
 ===
 
-`scripts/fitBeta.py -r 170,335,195,309 --max data/lba_cyg_250.ms.CORRECTED_DATA.channel.1ch.fits`
+```
+scripts/fitBeta.py -r 170,335,195,309 --max data/lba_cyg_250.ms.CORRECTED_DATA.channel.1ch.fits
+```
 

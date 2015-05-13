@@ -2,6 +2,7 @@
 Measurement operations
 """
 
+#TODO: shear estimator
 import numpy as np
 
 def flux():
@@ -24,9 +25,17 @@ def ellipticity():
     """Object ellipticity from polar shapelet coefficients [manual eq. 1.26]
     """
 
-#shear estimator
-
 if __name__ == "__main__":
     print "testing measure"
-    #load precomputed shapelet coeffs
-    #compute measures
+
+    #load precomputed shapelet coeffs (polar and cartesian)
+
+    #compute flux (polar)
+    #compute flux (cartesian)
+    #compute centroid (polar)
+    #compute centroid (cartesian)
+    #compute quadrupoles (cartesian J11, J12, J21, J22)
+    #compute size (polar)
+    #compute ellipticity (polar)
+    #compute size (cartesian)
+
