@@ -246,4 +246,12 @@ def chi2nmaxFunc(params,im,nm,beta,xc):
 
 if __name__ == "__main__":
     print 'testing decomp'
-    #call fitting scripts
+
+    import fileio
+    try:
+        im,hdr=fileio.readFITS('../data/N6251_test.fits',hdr=True)
+    except:
+        print 'Test failed'
+
+    #run decomp functions with predetermined values
+

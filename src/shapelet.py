@@ -2,6 +2,8 @@
 Functions for Shapelet related operations
 """
 
+import sys
+
 import numpy as np
 from scipy.misc import factorial
 from scipy import special
@@ -31,7 +33,10 @@ def basis2d(n0,n1,beta=[1.,1.],phi=0.):
     exp0=lambda x: beta[0] * b[0](x) * np.exp(-.5*(x**2))
     b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)
     exp1=lambda x: beta[1] * b[1](x) * np.exp(-.5*(x**2))
-    return np.dot(m,[exp0,exp1])
+
+    exp0p=lambda x: m[0,0]*exp0(x) + m[0,1]*exp1(x)
+    exp1p=lambda x: m[1,0]*exp0(x) + m[1,1]*exp1(x)
+    return [exp0p,exp1p]
 
 def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
     """2d dimensional Cartesian basis function of characteristic size beta
@@ -44,7 +49,10 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
     exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2)) * phs[0]
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))
     exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2)) * phs[1]
-    return np.dot(m,[exp0,exp1])
+
+    exp0p=lambda x: m[0,0]*exp0(x) + m[0,1]*exp1(x)
+    exp1p=lambda x: m[1,0]*exp0(x) + m[1,1]*exp1(x)
+    return [exp0p,exp1p]
 
 def polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
     """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta
@@ -102,14 +110,14 @@ def computeBasis2d(b,rx,ry):
 
 def computeBasis2dAtom(b,x,y):
     """Compute the basis function b in the position (x,y), x and y can be arrays"""
-    return (b[0]([x])*b[1]([y]))[0]
+    return b[0](x)*b[1](y)
 
 #########################################################
-
-def polar2cart():
-    """Convert a set of polar coefficients to Cartesian coefficients [manual eq. 1.27]
-    """
-
+#
+#def polar2cart():
+#    """Convert a set of polar coefficients to Cartesian coefficients [manual eq. 1.27]
+#    """
+#
 #def ftHermiteBasis(beta,nmax):
 #    """generate a set of Fourier Transformed Hermite basis functions
 #    nmax: maximum decompisition order
@@ -136,23 +144,143 @@ def polar2cart():
 #    return bfs
 
 if __name__ == "__main__":
-    print 'testing shapelets'
+
+    print '============================================'
+    print 'Testing shapelets module:'
+    print '============================================'
+    tc=0
+    te=0
+
     #hermite2d(n0,n1):
+    tc+=1
+    try:
+        h0,h1=hermite2d(3,4)
+        print 'hermite:', type(h0), type(h1)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #laguerre(n0,m0):
+    tc+=1
+    try:
+        l0=laguerre(3,3)
+        print 'laguerre:', type(l0)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #rotMatrix(phi):
+    tc+=1
+    try:
+        print rotMatrix(np.pi/4.)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #xyRotate(rx,ry,rot=0.):
+    tc+=1
+    try:
+        xp,yp=xyRotate(np.array([1.]),np.array([0.]),rot=np.pi/4.)
+        print xp,yp
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #basis2d(n0,n1,beta=[1.,1.],phi=0.):
+    tc+=1
+    try:
+        b=basis2d(3,4,beta=[1.,1.],phi=np.pi/4.)
+        print b[0](2.),b[1](3.5)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+        
     #dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
+    tc+=1
+    try:
+        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
+        print b[0](2.),b[1](3.5)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+    
     #polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
+    tc+=1
+    try:
+        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        print b(3.5,np.pi/8.)
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+    
     #polarArray(xc,size,rot=0.):
+    tc+=1
+    try:
+        r,th=polarArray([0.,0.],[15,20],rot=0.)
+        print r.shape, th.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #xy2rth(rx,ry):
+    tc+=1
+    try:
+        r,th=xy2rth(np.random.randn(10),np.random.randn(10))
+        print r.shape, th.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #rth2xy(r,th):
+    tc+=1
+    try:
+        x,y=rth2xy(np.random.randn(10),2.*np.pi*np.random.rand(10))
+        print x.shape,y.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #computeBasisPolar(b,r,th):
+    tc+=1
+    try:
+        r,th=polarArray([0.,0.],[15,20],rot=0.)
+        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        bval=computeBasisPolar(b,r,th)
+        print bval.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #computeBasisPolarAtom(b,r,th):
+    tc+=1
+    try:
+        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        bval=computeBasisPolar(b,5.,np.pi/8.)
+        print bval
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #computeBasis2d(b,rx,ry):
+    tc+=1
+    try:
+        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
+        bval=computeBasis2d(b,np.arange(2,10),np.arange(0,4))
+        print bval.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
     #computeBasis2dAtom(b,x,y):
+    tc+=1
+    try:
+        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
+        bval=computeBasis2dAtom(b,np.random.randn(10),np.random.randn(10))
+        print bval.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
 
-    #load precomputed polar coeffs
-    #convert to cart
-    #compare to precomputed cart coeffs
-
+    print '============================================'
+    print '%i of %i tests succeeded'%(tc-te,tc)
+    print '============================================'
