@@ -280,6 +280,7 @@ if __name__ == "__main__":
     print 'Testing decomp module:'
     print '============================================'
     import fileio
+    write_files = False #Flag to write coeff files
     tc=0
     te=0
     
@@ -307,6 +308,7 @@ if __name__ == "__main__":
         mPolar=genPolarBasisMatrix(beta0,5,0.,r0,th0)
         coeffs=solveCoeffs(mPolar,subim)
         print coeffs
+        if write_files: fileio.writeLageurreCoeffs('testLageurre.pkl',coeffs,xc,subim.shape,beta0,0.,[5,5],pos=[hdr['ra'],hdr['dec'],hdr['dra'],hdr['ddec']],info='Test Lageurre coeff file')
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
@@ -322,6 +324,7 @@ if __name__ == "__main__":
         mCart=genBasisMatrix(beta0,[5,5],0.,rx,ry)
         coeffs=solveCoeffs(mCart,subim)
         print coeffs
+        if write_files: fileio.writeHermiteCoeffs('testHermite.pkl',coeffs,xc,subim.shape,beta0,0.,5,pos=[hdr['ra'],hdr['dec'],hdr['dra'],hdr['ddec']],info='Test Hermite coeff file')
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1

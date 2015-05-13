@@ -18,6 +18,7 @@ Based on the shapelet framework developed in [Shapelets: I. A Method for Image A
 * numpy 
 * scipy 
 * pyfits 
+* json
 
 #### Recommended Python Modules
 ===
