@@ -14,7 +14,6 @@ try:
     from PIL import Image
 except ImportError: pass
 
-
 def readFITS(fn,hdr=False):
     """Read a FITS image file and returns a numpy array
     """
