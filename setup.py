@@ -1,5 +1,5 @@
-from setuptools import setup
-from Cython.Build import cythonize
+from setuptools import setup, find_packages
+#from Cython.Build import cythonize
 import numpy as np
 import os, sys, glob
 
@@ -14,11 +14,12 @@ setup(name = 'shapelets',
       url='',
       platforms=['*nix'],
       license='GPL',
-      requires = ['pyrap','distutils','pylab','numpy','pyfits','PIL','cPickle','scipy'],
+      requires = ['pyrap','distutils','pylab','numpy','pyfits','PIL','cPickle','scipy','json'],
       provides = ['shapelets'],
-      package_dir = {'shapelets':'src'},
       packages = ['shapelets'],
-      ext_modules = cythonize('shapelets/cshapelet.pyx', annotate=True),
+      #package_dir = {'shapelets':'src'},
+      #packages = find_packages(),
+      #ext_modules = cythonize('shapelets/cshapelet.pyx', annotate=True),
       include_dirs=[np.get_include()],
-      scripts=glob.glob('scripts/*.py'),
+      #scripts=glob.glob('scripts/*.py'),
 )

@@ -152,6 +152,27 @@ def ellipticity(coeffs,beta,nmax,mode='lageurre'):
         print 'Error: Unknown mode'
         return np.nan
 
+def all(coeffs,beta,nmax,mode):
+    """Comppute all measurements for a set of coefficients
+    coeffs: shapelet coefficients
+    beta: two element beta
+    nmax: coefficient limit
+    mode: Hermite or Lageurre
+    """
+    if mode.startswith('hermite'):
+        return {'flux': flux(coeffs,beta,nmax,mode),
+                'centroid': centroid(coeffs,beta,nmax,mode),
+                'quadrupoles': quadrupoles(coeffs,beta,nmax,mode),
+                'r2': r2size(coeffs,beta,nmax,mode) }
+    elif mode.startswith('lageurre'):
+        return {'flux': flux(coeffs,beta,nmax,mode),
+                'centroid': centroid(coeffs,beta,nmax,mode),
+                'r2': r2size(coeffs,beta,nmax,mode),
+                'ellipticity': ellipticity(coeffs,beta,nmax,mode)}
+    else:
+        print 'Error: Unknown mode'
+        return np.nan
+
 #TODO: cartesian to polar coeff transform
 #def cart2polar(coeffs,nmax):
 #    """Convert coefficients from Hermite Cartesian to Lageurre Polar
@@ -227,6 +248,14 @@ if __name__ == "__main__":
     tc+=1
     try:
         print ellipticity(laDict['coeffs'],laDict['beta'],laDict['norder'][0])
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
+    tc+=1
+    try:
+        print all(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']],mode=hermDict['mode'])
+        print all(laDict['coeffs'],laDict['beta'],laDict['norder'][0],mode=laDict['mode'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1

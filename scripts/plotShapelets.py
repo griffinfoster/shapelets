@@ -18,7 +18,7 @@ if __name__ == '__main__':
     o.add_option('-p', '--polar', dest='polar', action='store_true',
         help='Put in polar shapelet mode, default: False (cartesian)')
     o.add_option('-b', '--beta', dest='beta', default='1.0',
-        help='Characteristic shapelet size, if using Hermite can use 2 values i.e. \'2.1,3.5\' default: 1.0')
+        help='Characteristic shapelet size, can use 1(symetric beta), 2(elliptical beta), 3(elliptical beta with rotation) values i.e. \'2.1,3.5\' default: 1.0')
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
     opts, args = o.parse_args(sys.argv[1:])
@@ -28,8 +28,15 @@ if __name__ == '__main__':
     else: nmax=[int(nmax[0])+1,int(nmax[1])+1]
 
     beta=opts.beta.split(',')
-    if len(beta)==1: beta=[float(beta[0]),float(beta[0])]
-    else: beta=[float(beta[0]),float(beta[1])]
+    if len(beta)==1:
+        beta=[float(beta[0]),float(beta[0])]
+        phi=0.
+    elif len(beta)==2:
+        beta=[float(beta[0]),float(beta[1])]
+        phi=0.
+    else:
+        beta=[float(beta[0]),float(beta[1])]
+        phi=float(beta[2])
 
     xlim=[-5,5]
     ylim=[-5,5]
@@ -38,7 +45,6 @@ if __name__ == '__main__':
 
     if opts.polar:
         nmax=nmax[0]
-        beta=beta[0]
         print 'polar shapelets'
         fullImgReal=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         fullImgImag=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
@@ -47,7 +53,7 @@ if __name__ == '__main__':
         for nn in range(nmax):
             for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                    bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta)
+                    bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
                     bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
                     fullImgReal[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.real
                     fullImgImag[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.imag
