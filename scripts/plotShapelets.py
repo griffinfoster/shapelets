@@ -21,27 +21,29 @@ if __name__ == '__main__':
         help='Characteristic shapelet size, can use 1(symetric beta), 2(elliptical beta), 3(elliptical beta with rotation) values i.e. \'2.1,3.5\' default: 1.0')
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
+    o.add_option('-f', '--ft', dest='fourier', default=None,
+        help='Perform a Fourier transform on the basis functions, mode: fft (compute 2D Fourer transform). scale (compute the Fourier transform as a rescaling)')
     opts, args = o.parse_args(sys.argv[1:])
 
     nmax=opts.nmax.split(',')
     if len(nmax)==1: nmax=[int(nmax[0])+1,int(nmax[0])+1]
     else: nmax=[int(nmax[0])+1,int(nmax[1])+1]
 
-    beta=opts.beta.split(',')
-    if len(beta)==1:
-        beta=[float(beta[0]),float(beta[0])]
+    betaphi=opts.beta.split(',')
+    if len(betaphi)==1:
+        beta=[float(betaphi[0]),float(betaphi[0])]
         phi=0.
-    elif len(beta)==2:
-        beta=[float(beta[0]),float(beta[1])]
+    elif len(betaphi)==2:
+        beta=[float(betaphi[0]),float(betaphi[1])]
         phi=0.
     else:
-        beta=[float(beta[0]),float(beta[1])]
-        phi=float(beta[2])
+        beta=[float(betaphi[0]),float(betaphi[1])]
+        phi=float(betaphi[2])
 
     xlim=[-5,5]
     ylim=[-5,5]
-    rx=np.arange(xlim[0],xlim[1],.1)
-    ry=np.arange(ylim[0],ylim[1],.1)
+    rx=np.linspace(xlim[0],xlim[1],num=128)
+    ry=np.linspace(ylim[0],ylim[1],num=128)
 
     if opts.polar:
         nmax=nmax[0]
@@ -49,12 +51,20 @@ if __name__ == '__main__':
         fullImgReal=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         fullImgImag=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         yOffset=len(ry)*nmax
-        r,th=shapelets.shapelet.xy2rth(rx,ry)
+        r,th=shapelets.shapelet.xy2rthGrid(rx,ry)
         for nn in range(nmax):
             for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                    bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
-                    bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
+                    if opts.fourier is None:
+                        bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
+                        bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
+                    elif opts.fourier.startswith('fft'):
+                        bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
+                        bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
+                        bval=np.fft.fftshift(np.fft.fft2(np.fft.fftshift(bval)))
+                    elif opts.fourier.startswith('scale'):
+                        bf=shapelets.shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi,fourier=True)
+                        bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
                     fullImgReal[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.real
                     fullImgImag[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.imag
         fig=p.figure()
@@ -95,10 +105,20 @@ if __name__ == '__main__':
         print 'cartesian shapelets'
         fig=p.figure()
         fullImg=np.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
+        xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
+        print xx,yy
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
-                bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta)
-                bval=shapelets.shapelet.computeBasis2d(bf,rx,ry)
+                if opts.fourier is None:
+                    bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi)
+                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
+                elif opts.fourier.startswith('fft'):
+                    bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi)
+                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
+                    bval=np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(bval))))
+                elif opts.fourier.startswith('scale'):
+                    bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi,fourier=True)
+                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
                 fullImg[n0*len(rx):(n0+1)*len(rx),n1*len(ry):(n1+1)*len(ry)]=bval
         
         p.imshow(fullImg)

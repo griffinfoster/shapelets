@@ -8,6 +8,13 @@ import numpy as np
 from scipy.misc import factorial
 from scipy import special
 
+#TODO: hermite 2d, round gaussian?
+#TODO: Fourier transform
+#########################################################
+#def polar2cart():
+#    """Convert a set of polar coefficients to Cartesian coefficients [manual eq. 1.27]
+#    """
+
 def hermite2d(n0,n1):
     """Return a n0 x n1 order 2D Hermite polynomial"""
     h0=special.hermite(n0)
@@ -23,44 +30,55 @@ def rotMatrix(phi):
     """2D Cartesian rotation matrix (radians)"""
     return np.matrix([[np.cos(phi),-1.*np.sin(phi)],[np.sin(phi),np.cos(phi)]])
 
-def basis2d(n0,n1,beta=[1.,1.],phi=0.):
+def basis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     """2d dimensionless Cartesian basis function
     phi: rotation angle
+    fourier: return the Fourier transformed version of the function
     """
     b=hermite2d(n0,n1)
     m=rotMatrix(phi)
-    b[0]*=((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5)
+    phs=1.
+    if fourier:
+        beta=[1./beta[0],1./beta[1]]
+        phs=1j**(n0+n1)
+    b[0]*=((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5)*phs
     exp0=lambda x: beta[0] * b[0](x) * np.exp(-.5*(x**2))
-    b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)
+    b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)*phs
     exp1=lambda x: beta[1] * b[1](x) * np.exp(-.5*(x**2))
 
-    exp0p=lambda x: m[0,0]*exp0(x) + m[0,1]*exp1(x)
-    exp1p=lambda x: m[1,0]*exp0(x) + m[1,1]*exp1(x)
-    return [exp0p,exp1p]
+    return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
 
-def dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
+def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     """2d dimensional Cartesian basis function of characteristic size beta
-    phs: additional phase factor, used in the Fourier Transform
     phi: rotation angle
+    fourier: return the Fourier transformed version of the function
     """
     b=hermite2d(n0,n1)
     m=rotMatrix(phi)
-    b[0]*=(beta[0]**(-.5))*(((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5))
-    exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2)) * phs[0]
-    b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))
-    exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2)) * phs[1]
+    phs=1.
+    if fourier:
+        beta=[1./beta[0],1./beta[1]]
+        phs=1j**(n0+n1)
+    b[0]*=(beta[0]**(-.5))*(((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5))*phs
+    exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2))
+    b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs
+    exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2))
 
-    exp0p=lambda x: m[0,0]*exp0(x) + m[0,1]*exp1(x)
-    exp1p=lambda x: m[1,0]*exp0(x) + m[1,1]*exp1(x)
-    return [exp0p,exp1p]
+    return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
 
-def polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
+#TODO: make into an elliptical form?
+def polarDimBasis(n0,m0,beta=1.,phi=0.,fourier=False):
     """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta
-    phs: additional phase factor, used in the Fourier Transform
     phi: rotation angle
+    fourier: return the Fourier transformed version of the function
     """
+    if len(beta)==1: beta=[beta,beta]
+    phs=1.
+    if fourier:
+        beta=[1./beta[0],1./beta[1]]
+        phs=1j**(n0+m0)
     b0=laguerre(n0,m0)
-    norm=(((-1.)**((n0-np.abs(m0))/2))/np.sqrt(beta[0]**(np.abs(m0)+1)*beta[1]**(np.abs(m0)+1)))*((float(factorial(int((n0-np.abs(m0))/2)))/float(factorial(int((n0+np.abs(m0))/2))))**.5)
+    norm=(((-1.)**((n0-np.abs(m0))/2))/np.sqrt(beta[0]**(np.abs(m0)+1)*beta[1]**(np.abs(m0)+1)))*((float(factorial(int((n0-np.abs(m0))/2)))/float(factorial(int((n0+np.abs(m0))/2))))**.5)*phs
     exp0=lambda r,th: norm * r**(np.abs(m0)) * b0((r**2.)/(beta[0]*beta[1])) * np.exp(-.5*(r**2.)/(beta[0]*beta[1])) * np.exp(-1j*m0*(th+phi))
     return exp0
 
@@ -76,7 +94,22 @@ def polarArray(xc,size,rot=0.):
     thExp = lambda x,y: np.arctan2(y,x)+rot
     return rExp(rx,ry.T), thExp(rx,ry.T)
 
-def xy2rth(rx,ry):
+def cartArray(xc,size):
+    """Return arrays of shape 'size' with x,y values centered on xc
+    """
+    rx=np.array(range(0,size[1]),dtype=float)-xc[0]
+    ry=np.array(range(0,size[0]),dtype=float)-xc[1]
+    rx=np.reshape(np.tile(rx,size[0]),(size[0],size[1]))
+    ry=np.reshape(np.tile(ry,size[1]),(size[1],size[0]))
+    return rx,ry.T
+
+def xy2Grid(rx,ry):
+    """Convert a range of x and y to a grid of shape (len(x),len(y))"""
+    rx0=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
+    ry0=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
+    return rx0,ry0.T
+
+def xy2rthGrid(rx,ry):
     """Convert a range of x and y to r,th arrays of shape (len(x),len(y))"""
     rx0=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
     ry0=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
@@ -92,7 +125,7 @@ def rth2xy(r,th):
 
 def xyRotate(rx,ry,rot=0.):
     """Apply a rotation(radians) to an set of X,Y coordinates"""
-    r0,th0=xy2rth(rx,ry)
+    r0,th0=xy2rthGrid(rx,ry)
     th0+=rot
     return rth2xy(r0,th0)
 
@@ -106,42 +139,11 @@ def computeBasisPolarAtom(b,r,th):
 
 def computeBasis2d(b,rx,ry):
     """Compute the values of a 2D Basis function b in range (rx,ry)"""
-    return np.outer(b[0](rx),b[1](ry))
+    return b(rx,ry)
 
 def computeBasis2dAtom(b,x,y):
     """Compute the basis function b in the position (x,y), x and y can be arrays"""
-    return b[0](x)*b[1](y)
-
-#########################################################
-#
-#def polar2cart():
-#    """Convert a set of polar coefficients to Cartesian coefficients [manual eq. 1.27]
-#    """
-#
-#def ftHermiteBasis(beta,nmax):
-#    """generate a set of Fourier Transformed Hermite basis functions
-#    nmax: maximum decompisition order
-#    beta: characteristic size of the shapelet
-#    """
-#    bfs=[]
-#    for x in range(nmax[0]):
-#        for y in range(nmax[1]):
-#            bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x),1j**(y)]))
-#            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]],phs=[1j**(x+1),1j**(y+1)]))
-#            #bfs.append(dimBasis2d(x,y,beta=[1./beta[0],1./beta[1]]))
-#    return bfs
-#
-#def ftLaguerreBasis(beta,nmax):
-#    """generate a set of Fourier Transformed Laguerre basis functions
-#    nmax: maximum decompisition order
-#    beta: characteristic size of the shapelet
-#    """
-#    bfs=[]
-#    for nn in range(nmax):
-#        for mm in np.arange(-1*nn,nn+1):
-#            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-#                bfs.append(polarDimBasis(nn,mm,beta=(1./beta),phs=(1j**nn * 1j**mm)))
-#    return bfs
+    return b(rx,ry)
 
 if __name__ == "__main__":
 
@@ -190,24 +192,24 @@ if __name__ == "__main__":
     tc+=1
     try:
         b=basis2d(3,4,beta=[1.,1.],phi=np.pi/4.)
-        print b[0](2.),b[1](3.5)
+        print b(2.,3.5)
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
         
-    #dimBasis2d(n0,n1,beta=[1.,1.],phs=[1.,1.],phi=0.):
+    #dimBasis2d(n0,n1,beta=[1.,1.],phi=0.):
     tc+=1
     try:
-        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
-        print b[0](2.),b[1](3.5)
+        b=dimBasis2d(3,4,beta=[1.,1.],phi=np.pi/4.)
+        print b(2.,3.5)
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
     
-    #polarDimBasis(n0,m0,beta=[1.,1.],phs=1.,phi=0.):
+    #polarDimBasis(n0,m0,beta=[1.,1.],phi=0.):
     tc+=1
     try:
-        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        b=polarDimBasis(3,3,beta=[1.,1.],phi=np.pi/4.)
         print b(3.5,np.pi/8.)
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -222,10 +224,19 @@ if __name__ == "__main__":
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    #xy2rth(rx,ry):
+    #cartArray(xc,size):
     tc+=1
     try:
-        r,th=xy2rth(np.random.randn(10),np.random.randn(10))
+        x,y=cartArray([6.,7.],[15,20])
+        print x.shape, y.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
+    #xy2rthGrid(rx,ry):
+    tc+=1
+    try:
+        r,th=xy2rthGrid(np.arange(10),np.arange(10))
         print r.shape, th.shape
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -244,7 +255,7 @@ if __name__ == "__main__":
     tc+=1
     try:
         r,th=polarArray([0.,0.],[15,20],rot=0.)
-        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        b=polarDimBasis(3,3,beta=[1.,1.],phi=np.pi/4.)
         bval=computeBasisPolar(b,r,th)
         print bval.shape
     except:
@@ -254,7 +265,7 @@ if __name__ == "__main__":
     #computeBasisPolarAtom(b,r,th):
     tc+=1
     try:
-        b=polarDimBasis(3,3,beta=[1.,1.],phs=1.,phi=np.pi/4.)
+        b=polarDimBasis(3,3,beta=[1.,1.],phi=np.pi/4.)
         bval=computeBasisPolar(b,5.,np.pi/8.)
         print bval
     except:
@@ -264,8 +275,9 @@ if __name__ == "__main__":
     #computeBasis2d(b,rx,ry):
     tc+=1
     try:
-        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
-        bval=computeBasis2d(b,np.arange(2,10),np.arange(0,4))
+        rx,ry=cartArray([6.,7.],[15,20])
+        b=dimBasis2d(3,4,beta=[1.,1.],phi=np.pi/4.)
+        bval=computeBasis2d(b,rx,ry)
         print bval.shape
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -274,7 +286,7 @@ if __name__ == "__main__":
     #computeBasis2dAtom(b,x,y):
     tc+=1
     try:
-        b=dimBasis2d(3,4,beta=[1.,1.],phs=[1.,1.],phi=np.pi/4.)
+        b=dimBasis2d(3,4,beta=[1.,1.],phi=np.pi/4.)
         bval=computeBasis2dAtom(b,np.random.randn(10),np.random.randn(10))
         print bval.shape
     except:
