@@ -91,9 +91,9 @@ def constructModel(bvals,coeffs,xc,size):
 def polarCoeffImg(coeffs,nmax):
     """Return 2D array of coeffs for Laguerre components for plotting
     """
-    im=np.zeros((nmax*2,nmax))
+    im=np.zeros((nmax[0]*2,nmax[0]))
     cnt=0
-    for nn in range(nmax):
+    for nn in range(nmax[0]):
         for mm in np.arange(-1*nn,nn+1):
             if nn%2==0 and mm%2==0:
                 im[mm+nmax-1,nn]=coeffs[cnt]
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     tc=0
     te=0
 
-    import fileio
+    import fileio,shapelet
     im,hdr=fileio.readFITS('../data/N6251_test.fits',hdr=True)
     
     #selPxRange(im,extent):
@@ -185,7 +185,8 @@ if __name__ == "__main__":
         shapeDict=fileio.readLageurreCoeffs('../data/testHermite.pkl')
         rx=np.array(range(0,shapeDict['size'][0]),dtype=float)-shapeDict['xc'][0]
         ry=np.array(range(0,shapeDict['size'][1]),dtype=float)-shapeDict['xc'][1]
-        bvals=decomp.genBasisMatrix(shapeDict['beta'],[shapeDict['norder'],shapeDict['norder']],shapeDict['phi'],rx,ry)
+        xx,yy=shapelet.xy2Grid(rx,ry)
+        bvals=decomp.genBasisMatrix(shapeDict['beta'],[shapeDict['norder'],shapeDict['norder']],shapeDict['phi'],xx,yy)
         mdl=constructModel(bvals,shapeDict['coeffs'],shapeDict['xc'],shapeDict['size'])
         print mdl.shape
     except:
@@ -196,7 +197,7 @@ if __name__ == "__main__":
     tc+=1
     try:
         shapeDict=fileio.readLageurreCoeffs('../data/testLageurre.pkl')
-        cim=polarCoeffImg(shapeDict['coeffs'].real,shapeDict['norder'][0])
+        cim=polarCoeffImg(shapeDict['coeffs'].real,shapeDict['norder'])
         print cim
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]

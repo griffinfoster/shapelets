@@ -36,7 +36,8 @@ def genPolarBasisMatrix(beta,nmax,phi,r,th):
     th: theta matrix of n pixels
     """
     bvals=[]
-    for nn in range(nmax):
+    if type(nmax) is int: nmax=[nmax,nmax]
+    for nn in range(nmax[0]):
         for mm in np.arange(-1*nn,nn+1):
             if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
                 bf=shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
@@ -53,6 +54,7 @@ def genBasisMatrix(beta,nmax,phi,rx,ry):
     ry: range of y values to evaluate basis functions
     """
     bvals=[]
+    if type(nmax) is int: nmax=[nmax,nmax]
     for x in range(nmax[0]):
         for y in range(nmax[1]):
             bf=shapelet.dimBasis2d(x,y,beta=beta,phi=phi)
@@ -188,8 +190,9 @@ def chi2Func(params,nmax,im,nm):
     #shift the (0,0) point to the centroid
     rx=np.array(range(0,size[0]),dtype=float)-xc
     ry=np.array(range(0,size[1]),dtype=float)-yc
+    xx,yy=shapelet.xy2Grid(rx,ry)
 
-    bvals=genBasisMatrix([betaX,betaY],nmax,phi,rx,ry)
+    bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -220,8 +223,9 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
     #shift the (0,0) point to the centroid
     rx=np.array(range(0,size[0]),dtype=float)-xc
     ry=np.array(range(0,size[1]),dtype=float)-yc
+    xx,yy=shapelet.xy2Grid(rx,ry)
 
-    bvals=genBasisMatrix([betaX,betaY],nmax,phi,rx,ry)
+    bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -245,8 +249,9 @@ def chi2xcFunc(params,beta0,beta1,phi,nmax,im,nm):
     #shift the (0,0) point to the centroid
     rx=np.array(range(0,size[0]),dtype=float)-xc
     ry=np.array(range(0,size[1]),dtype=float)-yc
+    xx,yy=shapelet.xy2Grid(rx,ry)
 
-    bvals=genBasisMatrix([beta0,beta1],nmax,phi,rx,ry)
+    bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -268,8 +273,9 @@ def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
     #shift the (0,0) point to the centroid
     rx=np.array(range(0,size[0]),dtype=float)-xc[0]
     ry=np.array(range(0,size[1]),dtype=float)-xc[1]
+    xx,yy=shapelet.xy2Grid(rx,ry)
 
-    bvals=genBasisMatrix([beta0,beta1],nmax,phi,rx,ry)
+    bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,xc,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -321,7 +327,8 @@ if __name__ == "__main__":
         xc=img.maxPos(subim)
         rx=np.array(range(0,subim.shape[0]),dtype=float)-xc[0]
         ry=np.array(range(0,subim.shape[1]),dtype=float)-xc[1]
-        mCart=genBasisMatrix(beta0,[5,5],0.,rx,ry)
+        xx,yy=shapelet.xy2Grid(rx,ry)
+        mCart=genBasisMatrix(beta0,[5,5],0.,xx,yy)
         coeffs=solveCoeffs(mCart,subim)
         print coeffs
         if write_files: fileio.writeHermiteCoeffs('testHermite.pkl',coeffs,xc,subim.shape,beta0,0.,5,pos=[hdr['ra'],hdr['dec'],hdr['dra'],hdr['ddec']],info='Test Hermite coeff file')

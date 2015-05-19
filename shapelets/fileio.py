@@ -78,6 +78,7 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode=
     info: extra metadata space
     fmt: output formats supported: pkl (pickle), json
     """
+    if type(norder) is int: norder=[norder,norder]
     d={ 'coeffs':coeffs,
         'mode':'hermite',
         'xc':xc,
@@ -136,6 +137,7 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode
     info: extra metadata space
     fmt: output formats supported: pkl (pickle), json
     """
+    if type(norder) is int: norder=[norder,norder]
     d={ 'mode':'lageurre',
         'xc':xc,
         'size':size,
@@ -183,9 +185,21 @@ def readLageurreCoeffs(fn):
         return np.nan
 
 #TODO: a general coeff file reader
-#def readCoeffs(fn):
-#    """At present readLageurreCoeffs and readHermiteCoeffs do the same operations"""
-#    return readHermiteCoeffs(fn)
+def readCoeffs(fn):
+    """Determine a coefficient file based on file extension, call the correct reader
+    """
+    if fn.endswith('.pkl'):
+        fh=open(fn,'rb')
+        d=pickle.load(fh)
+        fh.close()
+        return d
+    elif fn.endswith('.json'):
+        fh=open(fn,'r')
+        d=json.load(fh)
+        fh.close()
+        if d['mode'].startswith('hermite'): return readHermiteCoeffs(fn)
+        elif d['mode'].startswith('lageurre'): return readLageurreCoeffs(fn)
+
 
 if __name__ == "__main__":
 
