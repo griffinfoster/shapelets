@@ -5,7 +5,7 @@ Plot a set of shapelet basis functions
 
 import sys
 import numpy as np
-import pylab as p
+from matplotlib import pyplot as plt
 import shapelets
 
 if __name__ == '__main__':
@@ -67,43 +67,40 @@ if __name__ == '__main__':
                         bval=shapelets.shapelet.computeBasisPolar(bf,r,th)
                     fullImgReal[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.real
                     fullImgImag[mm*len(ry)+yOffset:(mm+1)*len(ry)+yOffset,nn*len(rx):(nn+1)*len(rx)]=bval.imag
-        fig=p.figure()
+        fig=plt.figure()
         fig.subplots_adjust(wspace=0.3)
         
-        p.subplot(121)
-        p.imshow(fullImgReal)
+        plt.subplot(121)
+        plt.imshow(fullImgReal)
         for nn in range(nmax):
             for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                    p.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
-        p.xlim(xmin=0,xmax=len(rx)*nmax)
-        p.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
-        p.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
-        p.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
-        p.title('Real')
-        p.colorbar()
+                    plt.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
+        plt.xlim(xmin=0,xmax=len(rx)*nmax)
+        plt.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
+        plt.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
+        plt.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
+        plt.title('Real')
+        plt.colorbar()
         
-        p.subplot(122)
-        p.imshow(fullImgImag)
+        plt.subplot(122)
+        plt.imshow(fullImgImag)
         for nn in range(nmax):
             for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                    p.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
-        p.xlim(xmin=0,xmax=len(rx)*nmax)
-        p.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
-        p.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
-        p.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
-        p.title('Imaginary')
-        p.colorbar()
+                    plt.fill([nn*len(rx),(nn+1)*len(rx),(nn+1)*len(rx),nn*len(rx)],[mm*len(ry)+yOffset,mm*len(ry)+yOffset,(mm+1)*len(ry)+yOffset,(mm+1)*len(ry)+yOffset],fill=False)
+        plt.xlim(xmin=0,xmax=len(rx)*nmax)
+        plt.ylim(ymin=len(ry)*nmax*2,ymax=len(ry))
+        plt.xticks(np.arange(0,len(rx)*nmax,len(rx))+(len(rx)/2),range(nmax))
+        plt.yticks(np.arange(0,len(ry)*(nmax*2+1),len(ry)+1)+(len(ry)/2),nmax-np.arange(nmax*2+1))
+        plt.title('Imaginary')
+        plt.colorbar()
        
-        p.suptitle('Lageurre Basis Functions (Polar)')
-        if not (opts.savefig is None):
-            p.savefig(opts.savefig)
-        p.show()
+        plt.suptitle('Lageurre Basis Functions (Polar)')
     
     else:
         print 'cartesian shapelets'
-        fig=p.figure()
+        fig=plt.figure()
         fullImg=np.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
         print xx,yy
@@ -121,19 +118,18 @@ if __name__ == '__main__':
                     bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
                 fullImg[n0*len(rx):(n0+1)*len(rx),n1*len(ry):(n1+1)*len(ry)]=bval
         
-        p.imshow(fullImg)
+        plt.imshow(fullImg)
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
-                p.fill([n1*len(rx),(n1+1)*len(rx),(n1+1)*len(rx),n1*len(rx)],[n0*len(ry),n0*len(ry),(n0+1)*len(ry),(n0+1)*len(ry)],fill=False)
-        p.xlim(xmin=0,xmax=len(rx)*nmax[0])
-        p.xticks(np.arange(0,len(rx)*nmax[0],len(rx))+(len(rx)/2),range(nmax[0]))
-        p.yticks(np.arange(0,len(ry)*nmax[1],len(ry))+(len(ry)/2),range(nmax[1]))
-        p.ylim(ymin=len(ry)*nmax[1],ymax=0)
-        p.title('Hermite Basis Functions (Cartesian)')
-        p.colorbar()
+                plt.fill([n1*len(rx),(n1+1)*len(rx),(n1+1)*len(rx),n1*len(rx)],[n0*len(ry),n0*len(ry),(n0+1)*len(ry),(n0+1)*len(ry)],fill=False)
+        plt.xlim(xmin=0,xmax=len(rx)*nmax[0])
+        plt.xticks(np.arange(0,len(rx)*nmax[0],len(rx))+(len(rx)/2),range(nmax[0]))
+        plt.yticks(np.arange(0,len(ry)*nmax[1],len(ry))+(len(ry)/2),range(nmax[1]))
+        plt.ylim(ymin=len(ry)*nmax[1],ymax=0)
+        plt.title('Hermite Basis Functions (Cartesian)')
+        plt.colorbar()
 
-        if not (opts.savefig is None):
-            p.savefig(opts.savefig)
-
-        p.show()
+    if not (opts.savefig is None):
+        plt.savefig(opts.savefig)
+    else: plt.show()
 
