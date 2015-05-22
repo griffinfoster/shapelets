@@ -29,6 +29,14 @@ Based on the shapelet framework developed in [Shapelets: I. A Method for Image A
 #### Install
 ===
 
+While developing it is useful to do a developer install:
+
+```
+sudo python setup.py develop
+```
+
+Otherwise, the standard install will work:
+
 ```
 sudo python setup.py install  
 ```
