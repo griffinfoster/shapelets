@@ -54,7 +54,7 @@ if __name__ == '__main__':
     plt.colorbar()
 
     plt.subplot(212)
-    plt.title('Coefficents')
+    plt.title('Coefficients')
     plt.pcolor(coeffs)
     plt.colorbar()
     

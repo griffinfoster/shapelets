@@ -116,7 +116,7 @@ if __name__ == '__main__':
         plt.colorbar()
         
         plt.subplot(224)
-        plt.title('Coefficents')
+        plt.title('Coefficients')
         cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax)
         cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax)
         cimI=np.fliplr(cimI)
@@ -129,19 +129,6 @@ if __name__ == '__main__':
         shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn)
         
     else:
-
-        #rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        #ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
-        #xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        #bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,xx,yy)
-        #fullImg=np.zeros((im.shape[0]*nmax[1],im.shape[1]*nmax[0]))
-        #cnt=0
-        #for n0 in np.arange(nmax[0]):
-        #    for n1 in np.arange(nmax[1]):
-        #        fullImg[n0*im.shape[0]:(n0+1)*im.shape[0],n1*im.shape[1]:(n1+1)*im.shape[1]]=np.reshape(bvals[:,cnt],im.shape)
-        #        cnt+=1
-        #plt.imshow(fullImg)
-        #plt.show()
 
         #plot: data, model, residual: model-data, coeffs
         fig = plt.figure()
@@ -175,7 +162,7 @@ if __name__ == '__main__':
         plt.colorbar()
 
         plt.subplot(224)
-        plt.title('Coefficents')
+        plt.title('Coefficients')
         sqCoeffs=np.reshape(coeffs,nmax)
         plt.pcolor(sqCoeffs)
         plt.colorbar()

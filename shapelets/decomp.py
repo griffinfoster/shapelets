@@ -124,9 +124,9 @@ def solveCoeffs(m,im):
     theta_hat=np.dot(mTm_inv_mT,im_flat) #compute the coefficents for the basis functions
     return theta_hat
 
-def chi2PolarFunc(params,nmax,im,nm):
+def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],r=None,th=None):
     """Function which is to be minimized in the chi^2 analysis for Polar shapelets
-    params = [beta0, beta1, phi, xc, yc]
+    params = [beta0, beta1, phi, xc, yc] or some subset
         beta0: characteristic size of shapelets, fit parameter
         beta1: characteristic size of shapelets, fit parameter
         phi: rotation angle of shapelets, fit parameter
@@ -135,12 +135,35 @@ def chi2PolarFunc(params,nmax,im,nm):
     nmax: number of coefficents to use in the Laguerre polynomials
     im: observed image
     nm: noise map
+    order: order of parameters
+    fixed parameters: set_beta, set_phi, set_xc
+    r: radius from centroid, array of im.shape, not required if xc and yc being fit
+    th: angle from centroid, array of im.shape, not required if xc and yc being fit
     """
-    beta0=params[0]
-    beta1=params[1]
-    phi=params[2]
-    xc=params[3]
-    yc=params[4]
+    #determine which parameters are being fit for, and which are not
+    beta0=set_beta[0]
+    beta1=set_beta[1]
+    phi=set_phi
+    xc=set_xc[0]
+    yc=set_xc[1]
+    fitParams={'beta':False,'phi':False,'xc':False}
+    for pid,paramName in enumerate(order):
+        if paramName=='beta0':
+            beta0=params[pid]
+            fitParams['beta']=True
+        elif paramName=='beta1':
+            beta1=params[pid]
+            fitParams['beta']=True
+        elif paramName=='phi':
+            phi=params[pid]
+            fitParams['phi']=True
+        elif paramName=='xc':
+            xc=params[pid]
+            fitParams['xc']=True
+        elif paramName=='yc':   
+            yc=params[pid]
+            fitParams['xc']=True
+
     if beta0<0.:
         print 'warning: beta going negative, setting to 0.0'
         beta0=0.
@@ -150,38 +173,8 @@ def chi2PolarFunc(params,nmax,im,nm):
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(beta0,beta1,phi,xc,yc)
 
     size=im.shape
-    r,th=shapelet.polarArray([xc,yc],size)
-    bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
-    coeffs=solveCoeffs(bvals,im)
-    mdl=np.abs(img.constructModel(bvals,coeffs,size))
-    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
-
-def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
-    """Function which is to be minimized in the chi^2 analysis for Polar shapelets
-    params = [beta0, beta1, phi]
-        beta0: characteristic size of shapelets, fit parameter
-        beta1: characteristic size of shapelets, fit parameter
-        phi: rotation angle of shapelets, fit parameter
-    xc: x centroid of shapelets
-    yc: y centroid of shapelets
-    r: radius from centroid, array of im.shape
-    th: angle from centroid, array of im.shape
-    nmax: number of coefficents to use in the Laguerre polynomials
-    im: observed image
-    nm: noise map
-    """
-    beta0=params[0]
-    beta1=params[1]
-    phi=params[2]
-    if beta0<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        beta0=0.
-    if beta1<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        beta1=0.
-    print 'beta: (%f,%f)\t phi: %f'%(beta0,beta1,phi)
-
-    size=im.shape
+    if fitParams['xc'] or r is None:
+        r,th=shapelet.polarArray([xc,yc],size) #the redius,theta pairs need to updated if fitting for the xc centre or if not using the r,th inputs
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
     coeffs=solveCoeffs(bvals,im)
     mdl=np.abs(img.constructModel(bvals,coeffs,size))
@@ -198,8 +191,8 @@ def chi2nmaxPolarFunc(params,im,nm,beta0,beta1,phi,xc):
     phi: rotation angle
     xc: fit centroid position
     """
-    #print params
-    nmax=params[0]
+    #nmax=params[0]
+    nmax=[params, params]
     size=im.shape
     r,th=shapelet.polarArray(xc,size)
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
@@ -388,24 +381,30 @@ if __name__ == "__main__":
     xc=img.maxPos(subim)
     mean,std=img.estimateNoise(subim,mode='basic')
     nm=img.makeNoiseMap(subim.shape,mean,std)
+    nmax=[10,10]
 
     #chi2PolarFunc(params,nmax,im,nm):
     try:
-        func0=chi2PolarFunc([beta0[0],beta0[1],0.,xc[0],xc[1]],5,subim,nm)
-        print func0
+        print chi2PolarFunc([beta0[0],beta0[1],phi0,xc[0],xc[1]],nmax,subim,nm,order=['beta0','beta1','phi','xc','yc']) #fit: all
+        print chi2PolarFunc([beta0[0],beta0[1]],nmax,subim,nm,order=['beta0','beta1'],set_phi=phi0,set_xc=xc) #fit: beta
+        print chi2PolarFunc([phi0],nmax,subim,nm,order=['phi'],set_beta=beta0,set_xc=xc) #fit: phi
+        print chi2PolarFunc([xc[0],xc[1]],nmax,subim,nm,order=['xc','yc'],set_beta=beta0,set_phi=phi0) #fit: xc
+        print chi2PolarFunc([beta0[0],beta0[1],phi0],nmax,subim,nm,order=['beta0','beta1','phi'],set_xc=xc) #fit: beta, phi
+        print chi2PolarFunc([beta0[0],beta0[1],xc[0],xc[1]],nmax,subim,nm,order=['beta0','beta1','xc','yc'],set_phi=phi0) #fit: beta, xc
+        print chi2PolarFunc([phi0,xc[0],xc[1]],nmax,subim,nm,order=['phi','xc','yc'],set_beta=beta0) #fit: phi, xc
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    #chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
-    tc+=1
-    try:
-        r0,th0=shapelet.polarArray(xc,subim.shape)
-        func0=chi2betaPolarFunc([beta0[0],beta0[1],0.],xc[0],xc[1],r0,th0,5,subim,nm)
-        print func0
-    except:
-        print 'Test failed (%i):'%tc, sys.exc_info()[0]
-        te+=1
+    ##chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
+    #tc+=1
+    #try:
+    #    r0,th0=shapelet.polarArray(xc,subim.shape)
+    #    func0=chi2betaPolarFunc([beta0[0],beta0[1],0.],xc[0],xc[1],r0,th0,5,subim,nm)
+    #    print func0
+    #except:
+    #    print 'Test failed (%i):'%tc, sys.exc_info()[0]
+    #    te+=1
 
     #chi2nmaxPolarFunc(params,im,nm,beta,xc):
     tc+=1
