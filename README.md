@@ -2,7 +2,7 @@ shapelets
 ===
 
 Created: 15.02.12  
-Last Modified: 13.05.15  
+Last Modified: 22.05.15  
 Contact: griffin.foster@gmail.com  
 
 A python module for fitting and decomposing images (FITS,PNG,JPEG...) into shapelet coefficients, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
@@ -36,18 +36,25 @@ sudo python setup.py install
 #### Usage
 ===
 
-The scripts directory contains a number scripts for fitting.
+The scripts directory contains a number scripts for plotting, decomposing, and fitting.
 
-* fitHermite.py: fits beta, and the centroid to use Hermite polynomials(Cartesian) 
-* fitLaguerre.py: fits beta, and the centroid to use Laguerre polynomials(Polar) 
-* fitBeta.py: fits only beta, uses a fixed centroid, both sets of polynomials can be fit for 
-* solveShapelet.py: solve the shapelet decomposition for a given centroid, and beta (Polar or Cartesian) 
-* plot*.py: scripts for plotting coefficient files, shapelet basis functions and images 
+* plotShapelets.py : plot a grid of shapelet basis functions
+* plotImg.py : load a FITS or image file, useful for determing coordinates to apply shapelet decomposition
+* plotCoeffs.py : given a shapelet coefficient file, plot the modelled source and coefficients
+* solveShapelet.py : given a set of parameters and an image, decompose the image into shapelet coefficients
+* fitShapelet.py : fit parameters to minimize the chi^2 difference between shapelet model and image
 
 #### Examples
 ===
 
 ```
-scripts/fitBeta.py -r 170,335,195,309 --max data/lba_cyg_250.ms.CORRECTED_DATA.channel.1ch.fits
+plotShapelets.py -n 4 -p -b 1.0,1.0,0.44
+
+solveShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 20 -m polar
+solveShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 20 -b 3.,3. -p 0.448266
+
+fitShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 8 -m polar -p 0.486636 -b 4.,4. --set_phi --set_xc
+fitShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 8 -p 0.486636 -b 4.,4. --set_phi --set_xc
+
 ```
 
