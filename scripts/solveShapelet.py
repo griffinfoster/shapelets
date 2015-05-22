@@ -162,7 +162,6 @@ if __name__ == '__main__':
         ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
         bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,xx,yy)
-        print bvals.shape
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
         plt.imshow(mdl)
@@ -183,7 +182,7 @@ if __name__ == '__main__':
         
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,nmax,phi0,info=ifn)
+        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn)
         
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)

@@ -25,11 +25,10 @@ if __name__ == '__main__':
         ry=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
         bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],d['phi'],xx,yy)
-        mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['xc'],d['size'])
+        mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['size'])
 
         #coeffs
-        coeffs=np.reshape(d['coeffs'],[d['norder'],d['norder']]) # this will be a bug, change to next line
-        #coeffs=np.reshape(d['coeffs'],d['norder'])
+        coeffs=np.reshape(d['coeffs'],d['norder'])
 
         plt.suptitle('Hermite')
 
@@ -37,7 +36,7 @@ if __name__ == '__main__':
         #model
         r0,th0=shapelets.shapelet.polarArray(d['xc'],d['size'])
         bvals=shapelets.decomp.genPolarBasisMatrix(d['beta'],d['norder'],d['phi'],r0,th0)
-        mdl=np.abs(shapelets.img.constructModel(bvals,d['coeffs'],d['xc'],d['size']))
+        mdl=np.abs(shapelets.img.constructModel(bvals,d['coeffs'],d['size']))
 
         #coeffs
         coeffs=d['coeffs']
