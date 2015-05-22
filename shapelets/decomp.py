@@ -200,97 +200,61 @@ def chi2nmaxPolarFunc(params,im,nm,beta0,beta1,phi,xc):
     mdl=np.abs(img.constructModel(bvals,coeffs,size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
-def chi2Func(params,nmax,im,nm):
-    """Function which is to be minimized in the chi^2 analysis
-    params = [betaX, betaY, phi, xc, yc]
-        betaX: characteristic size of shapelets, fit parameter
-        betaY: characteristic size of shapelets, fit parameter
+def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],xx=None,yy=None):
+    """Function which is to be minimized in the chi^2 analysis for Cartesian shapelets
+    params = [beta0, beta1, phi, xc, yc] or some subset
+        beta0: characteristic size of shapelets, fit parameter
+        beta1: characteristic size of shapelets, fit parameter
         phi: rotation angle of shapelets, fit parameter
         xc: x centroid of shapelets, fit parameter
         yc: y centroid of shapelets, fit parameter
-    nmax: number of coefficents to use in x,y
+    nmax: number of coefficents to use in the Hermite polynomials
     im: observed image
     nm: noise map
+    order: order of parameters
+    fixed parameters: set_beta, set_phi, set_xc
+    xx: X postiion grid, array of im.shape, not required if xc and yc being fit
+    yy: Y position grid, array of im.shape, not required if xc and yc being fit
     """
-    betaX=params[0]
-    betaY=params[1]
-    phi=params[2]
-    xc=params[3]
-    yc=params[4]
+    #determine which parameters are being fit for, and which are not
+    betaX=set_beta[0]
+    betaY=set_beta[1]
+    phi=set_phi
+    xc=set_xc[0]
+    yc=set_xc[1]
+    fitParams={'beta':False,'phi':False,'xc':False}
+    for pid,paramName in enumerate(order):
+        if paramName=='beta0':
+            betaX=params[pid]
+            fitParams['beta']=True
+        elif paramName=='beta1':
+            betaY=params[pid]
+            fitParams['beta']=True
+        elif paramName=='phi':
+            phi=params[pid]
+            fitParams['phi']=True
+        elif paramName=='xc':
+            xc=params[pid]
+            fitParams['xc']=True
+        elif paramName=='yc':   
+            yc=params[pid]
+            fitParams['xc']=True
+
     if betaX<0.:
-        print 'warning: betaX going negative, setting to 0.0'
+        print 'warning: beta going negative, setting to 0.0'
         betaX=0.
     if betaY<0.:
-        print 'warning: betaY going negative, setting to 0.0'
+        print 'warning: beta going negative, setting to 0.0'
         betaY=0.
-    print 'beta: (%f,%f)\tphi: %f\txc: (%f,%f)'%(betaX,betaY,phi,xc,yc)
-    
-    size=im.shape
-    #shift the (0,0) point to the centroid
-    rx=np.array(range(0,size[0]),dtype=float)-xc
-    ry=np.array(range(0,size[1]),dtype=float)-yc
-    xx,yy=shapelet.xy2Grid(rx,ry)
+    print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(betaX,betaY,phi,xc,yc)
 
+    size=im.shape
+    if fitParams['xc'] or xx is None:
+        #shift the (0,0) point to the centroid
+        rx=np.array(range(0,size[0]),dtype=float)-xc
+        ry=np.array(range(0,size[1]),dtype=float)-yc
+        xx,yy=shapelet.xy2Grid(rx,ry)
     bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
-    coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,size)
-    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
-
-def chi2betaFunc(params,xc,yc,nmax,im,nm):
-    """Function which is to be minimized in the chi^2 analysis
-    params = [betaX, betaY, phi]
-        betaX: characteristic size of shapelets, fit parameter
-        betaY: characteristic size of shapelets, fit parameter
-        phi: rotation angle of shapelets, fit parameter
-    xc: x centroid of shapelets
-    yc: y centroid of shapelets
-    nmax: number of coefficents to use in x,y
-    im: observed image
-    nm: noise map
-    """
-    betaX=params[0]
-    betaY=params[1]
-    phi=params[2]
-    if betaX<0.:
-        print 'warning: betaX going negative, setting to 0.0'
-        betaX=0.
-    if betaY<0.:
-        print 'warning: betaY going negative, setting to 0.0'
-        betaY=0.
-    print 'beta: (%f,%f)\tphi: %f'%(betaX,betaY,phi)
-    size=im.shape
-    #shift the (0,0) point to the centroid
-    rx=np.array(range(0,size[0]),dtype=float)-xc
-    ry=np.array(range(0,size[1]),dtype=float)-yc
-    xx,yy=shapelet.xy2Grid(rx,ry)
-
-    bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
-    coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,size)
-    return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
-
-def chi2xcFunc(params,beta0,beta1,phi,nmax,im,nm):
-    """Function which is to be minimized in the chi^2 analysis
-    params = [xc, yc]
-        xc: x centroid of shapelets, fit parameter
-        yc: y centroid of shapelets, fit parameter
-    beta0: characteristic size of shapelet
-    beta1: characteristic size of shapelet
-    phi: rotation angle of shapelets
-    nmax: number of coefficents to use in x,y
-    im: observed image
-    nm: noise map
-    """
-    xc=params[0]
-    yc=params[1]
-    print xc,yc
-    size=im.shape
-    #shift the (0,0) point to the centroid
-    rx=np.array(range(0,size[0]),dtype=float)-xc
-    ry=np.array(range(0,size[1]),dtype=float)-yc
-    xx,yy=shapelet.xy2Grid(rx,ry)
-
-    bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -306,7 +270,6 @@ def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
     phi: rotation angle of shapelets
     xc: fit centroid position
     """
-    print params
     nmax=params
     size=im.shape
     #shift the (0,0) point to the centroid
@@ -314,7 +277,7 @@ def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
     ry=np.array(range(0,size[1]),dtype=float)-xc[1]
     xx,yy=shapelet.xy2Grid(rx,ry)
 
-    bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
+    bvals=genBasisMatrix([beta0,beta1],[nmax,nmax],phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
@@ -384,6 +347,7 @@ if __name__ == "__main__":
     nmax=[10,10]
 
     #chi2PolarFunc(params,nmax,im,nm):
+    tc+=1
     try:
         print chi2PolarFunc([beta0[0],beta0[1],phi0,xc[0],xc[1]],nmax,subim,nm,order=['beta0','beta1','phi','xc','yc']) #fit: all
         print chi2PolarFunc([beta0[0],beta0[1]],nmax,subim,nm,order=['beta0','beta1'],set_phi=phi0,set_xc=xc) #fit: beta
@@ -396,20 +360,10 @@ if __name__ == "__main__":
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    ##chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
-    #tc+=1
-    #try:
-    #    r0,th0=shapelet.polarArray(xc,subim.shape)
-    #    func0=chi2betaPolarFunc([beta0[0],beta0[1],0.],xc[0],xc[1],r0,th0,5,subim,nm)
-    #    print func0
-    #except:
-    #    print 'Test failed (%i):'%tc, sys.exc_info()[0]
-    #    te+=1
-
     #chi2nmaxPolarFunc(params,im,nm,beta,xc):
     tc+=1
     try:
-        print chi2nmaxPolarFunc([5],subim,nm,beta0[0],beta0[1],0.,xc)
+        print chi2nmaxPolarFunc(5,subim,nm,beta0[0],beta0[1],0.,xc)
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
@@ -417,25 +371,13 @@ if __name__ == "__main__":
     #chi2Func(params,nmax,im,nm):
     tc+=1
     try:
-        func0=chi2Func([beta0[0],beta0[1],0.,xc[0],xc[1]],[5,5],subim,nm)
-        print func0
-    except:
-        print 'Test failed (%i):'%tc, sys.exc_info()[0]
-        te+=1
-
-    #chi2betaFunc(params,xc,yc,nmax,im,nm):
-    tc+=1
-    try:
-        func0=chi2betaFunc([beta0[0],beta0[1],0.],xc[0],xc[1],[5,5],subim,nm)
-        print func0
-    except:
-        print 'Test failed (%i):'%tc, sys.exc_info()[0]
-        te+=1
-
-    #chi2xcFunc(params,beta0,beta1,phi,nmax,im,nm):
-    tc+=1
-    try:
-        print chi2xcFunc([xc[0],xc[1]],beta0[0],beta0[1],0.,[5,5],subim,nm)
+        print chi2Func([beta0[0],beta0[1],phi0,xc[0],xc[1]],nmax,subim,nm,order=['beta0','beta1','phi','xc','yc']) #fit: all
+        print chi2Func([beta0[0],beta0[1]],nmax,subim,nm,order=['beta0','beta1'],set_phi=phi0,set_xc=xc) #fit: beta
+        print chi2Func([phi0],nmax,subim,nm,order=['phi'],set_beta=beta0,set_xc=xc) #fit: phi
+        print chi2Func([xc[0],xc[1]],nmax,subim,nm,order=['xc','yc'],set_beta=beta0,set_phi=phi0) #fit: xc
+        print chi2Func([beta0[0],beta0[1],phi0],nmax,subim,nm,order=['beta0','beta1','phi'],set_xc=xc) #fit: beta, phi
+        print chi2Func([beta0[0],beta0[1],xc[0],xc[1]],nmax,subim,nm,order=['beta0','beta1','xc','yc'],set_phi=phi0) #fit: beta, xc
+        print chi2Func([phi0,xc[0],xc[1]],nmax,subim,nm,order=['phi','xc','yc'],set_beta=beta0) #fit: phi, xc
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
@@ -443,7 +385,7 @@ if __name__ == "__main__":
     #chi2nmaxFunc(params,im,nm,beta,xc):
     tc+=1
     try:
-        print chi2nmaxFunc([5,5],subim,nm,beta0[0],beta0[1],0.,xc)
+        print chi2nmaxFunc(5,subim,nm,beta0[0],beta0[1],0.,xc)
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1

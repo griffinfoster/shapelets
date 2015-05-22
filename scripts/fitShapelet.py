@@ -233,6 +233,85 @@ if __name__ == '__main__':
         shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax1,info=ifn)
         
     else:
+        rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+        ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+        xx0,yy0=shapelets.shapelet.xy2Grid(rx,ry)
+
+        #scipy-based minimizer
+        if set_xc:
+            if set_beta:
+                if set_phi:
+                    #same as solveShapelets, no minimization
+                    print 'No parameters to minimize, solving for coefficients with input values'
+                    beta1=beta0
+                    phi1=phi0
+                    xc1=xc
+                else:
+                    print 'Running minimization for phi only...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[phi0],args=(nmax,im,nm,['phi'],beta0,None,xc,xx0,yy0),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=beta0
+                    phi1=res['x'][0]
+                    xc1=xc
+            else:
+                if set_phi:
+                    print 'Running minimization for beta only...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0], beta0[1]],args=(nmax,im,nm,['beta0','beta1'],[None,None],phi0,xc,xx0,yy0),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=[res['x'][0],res['x'][1]]
+                    phi1=phi0
+                    xc1=xc
+                else:
+                    print 'Running minimization for beta and phi...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0], beta0[1], phi0],args=(nmax,im,nm,['beta0','beta1','phi'],[None,None],None,xc,xx0,yy0),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=[res['x'][0],res['x'][1]]
+                    phi1=res['x'][2]
+                    xc1=xc
+        else:
+            if set_beta:
+                if set_phi:
+                    print 'Running minimization for centroid only...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[xc[0],xc[1]],args=(nmax,im,nm,['xc','yc'],beta0,phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=beta0
+                    phi1=phi0
+                    xc1=[res['x'][0],res['x'][1]]
+                else:
+                    print 'Running minimization for phi and centroid...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[phi0,xc[0],xc[1]],args=(nmax,im,nm,['phi','xc','yc'],beta0,None,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=beta0
+                    phi1=res['x'][0]
+                    xc1=[res['x'][1],res['x'][2]]
+            else:
+                if set_phi:
+                    print 'Running minimization for beta and centroid...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0],beta0[1],xc[0],xc[1]],args=(nmax,im,nm,['beta0','beta1','xc','yc'],[None,None],phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=[res['x'][0],res['x'][1]]
+                    phi1=phi0
+                    xc1=[res['x'][2],res['x'][3]]
+                else:
+                    print 'Running minimization for beta, phi and centroid...'
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0], beta0[1], phi0, xc[0], xc[1]],args=(nmax,im,nm),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    print res
+                    beta1=[res['x'][0],res['x'][1]]
+                    phi1=res['x'][2]
+                    xc1=[res['x'][3],res['x'][4]]
+        print '\tDone'
+
+        #scipy optimize brute force over a range of N values
+        n0=1
+        n1=opts.brute+1
+        print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
+        nmax1=optimize.brute(shapelets.decomp.chi2nmaxFunc,[np.s_[n0:n1:1]],args=(im,nm,beta1[0],beta1[1],phi1,xc1),finish=None)
+        nmax1=[int(nmax1),int(nmax1)]
+        print 'Using %i x %i coefficients'%(nmax1[0],nmax1[1])
+        print '\tDone'
+
+        print 'Solution:'
+        print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f,%f) pixels \t ncoeffs: %i x %i'%(beta1[0], beta1[1], phi1, xc1[0], xc1[1], nmax1[0],nmax1[1])
 
         #plot: data, model, residual: model-data, coeffs
         fig = plt.figure()
@@ -249,10 +328,10 @@ if __name__ == '__main__':
         
         plt.subplot(222)
         plt.title('Model')
-        rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+        rx=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
+        ry=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,xx,yy)
+        bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,xx,yy)
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
         plt.imshow(mdl)
@@ -267,13 +346,13 @@ if __name__ == '__main__':
 
         plt.subplot(224)
         plt.title('Coefficients')
-        sqCoeffs=np.reshape(coeffs,nmax)
+        sqCoeffs=np.reshape(coeffs,nmax1)
         plt.pcolor(sqCoeffs)
         plt.colorbar()
         
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn)
+        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn)
         
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)
