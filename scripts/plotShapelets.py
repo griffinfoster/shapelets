@@ -103,7 +103,6 @@ if __name__ == '__main__':
         fig=plt.figure()
         fullImg=np.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        print xx,yy
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
                 if opts.fourier is None:

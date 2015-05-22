@@ -13,16 +13,16 @@ if __name__ == '__main__':
     o.set_usage('%prog [options] FITS_IMAGE')
     o.set_description(__doc__)
     o.add_option('-r', '--region', dest='region', default=None,
-        help='Region of image plot, (ymin,ymax,xmin,xmax), default: None')
+        help='Region of image plot, (xmin,xmax,ymin,ymax), default: None')
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
     opts, args = o.parse_args(sys.argv[1:])
 
     def onclick(event):
-        print 'start: \tx=%d \ty=%d'%(event.x, event.y)
+        print 'start: \tx=%d \ty=%d'%(event.xdata, event.ydata)
 
     def onrelease(event):
-        print 'end: \tx=%d \ty=%d'%(event.x, event.y)
+        print 'end: \tx=%d \ty=%d'%(event.xdata, event.ydata)
         print '=================================='
 
     fn=args[0]
@@ -35,7 +35,6 @@ if __name__ == '__main__':
         im=shapelets.img.selPxRange(im,extent)
     
     fig = plt.figure()
-    #cid = fig.canvas.mpl_connect('button_press_event', onclick)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
     cid = fig.canvas.mpl_connect('button_release_event', onrelease)
     

@@ -190,6 +190,7 @@ if __name__ == "__main__":
     print 'Testing measure module:'
     print '============================================'
     import fileio
+    import sys
     tc=0
     te=0
     
@@ -210,7 +211,7 @@ if __name__ == "__main__":
     #compute flux (polar)
     tc+=1
     try:
-        print flux(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']],mode=hermDict['mode'])
+        print flux(hermDict['coeffs'],hermDict['beta'],hermDict['norder'],mode=hermDict['mode'])
         print flux(laDict['coeffs'],laDict['beta'],laDict['norder'][0],mode=laDict['mode'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -220,7 +221,7 @@ if __name__ == "__main__":
     #compute centroid (cartesian)
     tc+=1
     try:
-        print centroid(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']],mode=hermDict['mode'])
+        print centroid(hermDict['coeffs'],hermDict['beta'],hermDict['norder'],mode=hermDict['mode'])
         print centroid(laDict['coeffs'],laDict['beta'],laDict['norder'][0],mode=laDict['mode'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -229,7 +230,7 @@ if __name__ == "__main__":
     #compute quadrupoles (cartesian J11, J12, J21, J22)
     tc+=1
     try:
-        print quadrupoles(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']])
+        print quadrupoles(hermDict['coeffs'],hermDict['beta'],hermDict['norder'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     #compute size (polar)
     tc+=1
     try:
-        print r2size(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']],mode=hermDict['mode'])
+        print r2size(hermDict['coeffs'],hermDict['beta'],hermDict['norder'],mode=hermDict['mode'])
         print r2size(laDict['coeffs'],laDict['beta'],laDict['norder'][0],mode=laDict['mode'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
@@ -254,7 +255,7 @@ if __name__ == "__main__":
 
     tc+=1
     try:
-        print all(hermDict['coeffs'],hermDict['beta'],[hermDict['norder'],hermDict['norder']],mode=hermDict['mode'])
+        print all(hermDict['coeffs'],hermDict['beta'],hermDict['norder'],mode=hermDict['mode'])
         print all(laDict['coeffs'],laDict['beta'],laDict['norder'][0],mode=laDict['mode'])
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]

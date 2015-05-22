@@ -9,7 +9,7 @@ import decomp
 
 def selPxRange(im,extent):
     """Select out the subimage within the extent region (xmin,xmax,ymin,ymax)"""
-    return im[extent[0]:extent[1],extent[2]:extent[3]]
+    return im[extent[2]:extent[3],extent[0]:extent[1]]
 
 def flux(im):
     """Total flux of the image (M00)"""
@@ -39,49 +39,67 @@ def maxPos(im, region=None):
     #shift minimum to zero
     im=im-im.min()
     maxpos=np.argwhere(im==np.max(im))[0]
-    return [maxpos[0]+offset[0],maxpos[1]+offset[1]]
+    return [maxpos[0]+offset[0]-1,maxpos[1]+offset[1]+1]
 
-def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
-    """Generate a noise map based on background pixels by iteratively clipping noise above a set sigma level
-    until the variation between iterations is within the tolerance or the maximum number of iterations is reached.
-    If region is set then the noise is computed for a region and applied to the entire map.
-    Masks can be included to ignore portions of the image."""
-    im=np.ma.array(im)
-    if region is None:
-        if not (masks is None):
-            for m in masks:
-                im[m[0]:m[1],m[2]:m[3]]=np.ma.masked
-        mean0=np.mean(im)
-        median0=np.median(im)
-        mode0=2.5*median0-1.5*mean0
-        std0=np.std(im)
-        conv=False
-        niter=0
-        if maxiter==0:conv=True #compute the noise on the unclipped image
-        while not conv:
-            print 'iteration:', niter
-            im=np.ma.masked_greater(im,sigma*np.abs(mode0))
-            im=np.ma.masked_less(im,-1*sigma*np.abs(mode0))
-            if np.abs(np.std(im)-std0)/std0 < tol: conv=True
-            elif np.ma.count_masked(im)>im.size*.5: conv=True
-            else:
-                std0=np.std(im)
-                mode0=2.5*np.median(im)-1.5*np.mean(im)
-            niter+=1
-            if not(maxiter is None) and niter==maxiter: break
-        #noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
-        noisemap=np.random.normal(np.mean(im),np.std(im),(im.shape[0],im.shape[1]))
-        return noisemap
-    else:
-        im_region=selPxRange(im,region)
-        std0=np.std(im_region)
-        mean0=np.mean(im_region)
-        noisemap=np.ones_like(im)
-        noisemap=np.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
-        return noisemap
+def makeNoiseMap(shape,mean=0.,std=1.):
+    """Return a noise map with a given shape, mean and std of Gaussian noise
+    """
+    return np.random.normal(mean,std,shape)
 
-def constructModel(bvals,coeffs,xc,size):
-    """Construct a model image based on the basis functions values, centroid position xc, and coeffs on an image
+#TODO: auto noise estimation perhaps with edge detection and masking out regions? needs to be worked on, for know we assuma e a good noise region is known
+def estimateNoise(im,mode='basic'):
+    """
+    Estimate the Gaussian noise statistics for an image
+    modes:
+        basic: compute the mean and std from an input image
+    """
+    if mode.startswith('basic'):
+        mean=np.mean(im)
+        std=np.std(im)
+        print 'Estimated noise: \tmean: %f \tstd: %f'%(mean,std)
+        return mean,std
+
+#def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
+#    """Generate a noise map based on background pixels by iteratively clipping noise above a set sigma level
+#    until the variation between iterations is within the tolerance or the maximum number of iterations is reached.
+#    If region is set then the noise is computed for a region and applied to the entire map.
+#    Masks can be included to ignore portions of the image."""
+#    im=np.ma.array(im)
+#    if region is None:
+#        if not (masks is None):
+#            for m in masks:
+#                im[m[0]:m[1],m[2]:m[3]]=np.ma.masked
+#        mean0=np.mean(im)
+#        median0=np.median(im)
+#        mode0=2.5*median0-1.5*mean0
+#        std0=np.std(im)
+#        conv=False
+#        niter=0
+#        if maxiter==0:conv=True #compute the noise on the unclipped image
+#        while not conv:
+#            print 'iteration:', niter
+#            im=np.ma.masked_greater(im,sigma*np.abs(mode0))
+#            im=np.ma.masked_less(im,-1*sigma*np.abs(mode0))
+#            if np.abs(np.std(im)-std0)/std0 < tol: conv=True
+#            elif np.ma.count_masked(im)>im.size*.5: conv=True
+#            else:
+#                std0=np.std(im)
+#                mode0=2.5*np.median(im)-1.5*np.mean(im)
+#            niter+=1
+#            if not(maxiter is None) and niter==maxiter: break
+#        #noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
+#        noisemap=np.random.normal(np.mean(im),np.std(im),(im.shape[0],im.shape[1]))
+#        return noisemap
+#    else:
+#        im_region=selPxRange(im,region)
+#        std0=np.std(im_region)
+#        mean0=np.mean(im_region)
+#        noisemap=np.ones_like(im)
+#        noisemap=np.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
+#        return noisemap
+
+def constructModel(bvals,coeffs,size):
+    """Construct a model image based on the basis functions values, and coeffs on an image
     with size dimensions
     """
     model_img=np.dot(bvals,coeffs)
@@ -170,24 +188,25 @@ if __name__ == "__main__":
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    #estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
+    #estimateNoise(im,mode='basic'):
     tc+=1
     try:
-        nm=estimateNoiseMap(im)
+        mean,std=estimateNoise(im,mode='basic')
+        nm=makeNoiseMap(im.shape,mean,std)
         print nm.shape
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    #constructModel(bvals,coeffs,xc,size):
+    #constructModel(bvals,coeffs,size):
     tc+=1
     try:
         shapeDict=fileio.readLageurreCoeffs('../data/testHermite.pkl')
         rx=np.array(range(0,shapeDict['size'][0]),dtype=float)-shapeDict['xc'][0]
         ry=np.array(range(0,shapeDict['size'][1]),dtype=float)-shapeDict['xc'][1]
         xx,yy=shapelet.xy2Grid(rx,ry)
-        bvals=decomp.genBasisMatrix(shapeDict['beta'],[shapeDict['norder'],shapeDict['norder']],shapeDict['phi'],xx,yy)
-        mdl=constructModel(bvals,shapeDict['coeffs'],shapeDict['xc'],shapeDict['size'])
+        bvals=decomp.genBasisMatrix(shapeDict['beta'],shapeDict['norder'],shapeDict['phi'],xx,yy)
+        mdl=constructModel(bvals,shapeDict['coeffs'],shapeDict['size'])
         print mdl.shape
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]

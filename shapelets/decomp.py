@@ -6,26 +6,72 @@ Implementation of "Statistics in Theory and Practice", Lupton, Ch. 11
 
 import numpy as np
 import shapelet,img
-import sys
+from scipy import optimize
 
-#TODO; check these initBeta functions
-def initBeta(im,frac=.25,nmax=5):
-    """Initial starting point for Beta, uses size of image to set limits, initial beta is set to the min beta
-    frac: fraction of a pixel to use as the minimum size
-    nmax: maximum decomposition order
-    beta_max = theta_max / (nmax+1)**.5
-    beta_min = theta_min * (nmax+1)**.5
-    """
-    beta_max=max(im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5))
-    #print im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5)
-    beta0=min(frac*((nmax+1.)**.5),beta_max)
-    return [beta0,beta0]
+#TODO; a better initBeta function
+#def initBeta(im,frac=.25,nmax=5):
+#    """Initial starting point for Beta, uses size of image to set limits, initial beta is set to the min beta
+#    frac: fraction of a pixel to use as the minimum size
+#    nmax: maximum decomposition order
+#    beta_max = theta_max / (nmax+1)**.5
+#    beta_min = theta_min * (nmax+1)**.5
+#    """
+#    beta_max=max(im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5))
+#    #print im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5)
+#    beta0=min(frac*((nmax+1.)**.5),beta_max)
+#    return [beta0,beta0]
+#
+#def initBeta(im,frac=.2):
+#    """Initial starting point for Beta, uses size of image
+#    frac: fraction of image to use as the initial beta
+#    """
+#    return [frac*im.shape[0],frac*im.shape[1]]
 
-def initBeta2(im,frac=.2):
-    """Initial starting point for Beta, uses size of image
-    frac: fraction of image to use as the initial beta
+def ellipticalGaussian2D(x0=0.,y0=0.,sigmax=1.,sigmay=1.,phi=0.,amp=1.,offset=0.):
+    """A generalized 2D ellipitical Gaussian function with centre (x0,y0), width (sigmax,sigmay), amplitude amp, offset, and rotation angle phi
     """
-    return [frac*im.shape[0],frac*im.shape[1]]
+    aa=((np.cos(phi))**2.)/(2.*(sigmax**2.)) + ((np.sin(phi))**2.)/(2.*(sigmay**2.))
+    bb=(-1.*np.sin(2.*phi))/(4.*(sigmax**2.)) + (np.sin(2.*phi))/(4.*(sigmay**2.))
+    cc=((np.sin(phi))**2.)/(2.*(sigmax**2.)) + ((np.cos(phi))**2.)/(2.*(sigmay**2.))
+    return lambda x,y: amp * np.exp( -1.*( aa*((x-x0)**2.) + 2.*bb*(x-x0)*(y-y0) + cc*((y-y0)**2.) ) ) + offset
+
+def initGaussian(im):
+    """Returns (x, y, sigmax, sigmay, phi, amp, offset)
+    the gaussian parameters of a 2D distribution by calculating its
+    moments
+    borrowed from: http://wiki.scipy.org/Cookbook/FittingData"""
+    total = im.sum()
+    X, Y = np.indices(im.shape)
+    x = (X*im).sum()/total
+    y = (Y*im).sum()/total
+    col = im[:, int(y)]
+    sigmax = np.sqrt(abs((np.arange(col.size)-y)**2*col).sum()/np.abs(col).sum())
+    row = im[int(x), :]
+    sigmay = np.sqrt(abs((np.arange(row.size)-x)**2*row).sum()/np.abs(row).sum())
+    offset=np.median(im)
+    amp = im.max()-offset
+    phi=0.
+    return x, y, sigmax, sigmay, phi, amp, offset
+
+def initBetaPhi(im,mode='basic',frac=.2,circular=False):
+    """Initial starting point for beta and phi
+    mode:
+        basic: beta is determined based on the size of the image and the frac arguement, phi is 0
+        fit: a 2D Gaussian is fit to the image, parameters derived from fit
+    frac: fraction of image to use as the initial beta (basic)
+    circular: if True, return a circular fit parameter using the smallest width
+    fitting borrowed from: http://wiki.scipy.org/Cookbook/FittingData
+    """
+    if mode.startswith('basic'):
+        return [frac*im.shape[0],frac*im.shape[1]], 0.
+    elif mode.startswith('fit'):
+        params=initGaussian(im)
+        errorfunction = lambda p: np.ravel(ellipticalGaussian2D(*p)(*np.indices(im.shape)) - im)
+        p, success = optimize.leastsq(errorfunction, params)
+        if circular:
+            width=np.min([p[2],p[3]])
+            return [width,width],p[4]
+        else: return [p[2],p[3]],p[4]
 
 def genPolarBasisMatrix(beta,nmax,phi,r,th):
     """Generate the n x k matrix of basis functions(k) for each pixel(n)
@@ -107,7 +153,7 @@ def chi2PolarFunc(params,nmax,im,nm):
     r,th=shapelet.polarArray([xc,yc],size)
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=np.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    mdl=np.abs(img.constructModel(bvals,coeffs,size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
@@ -138,7 +184,7 @@ def chi2betaPolarFunc(params,xc,yc,r,th,nmax,im,nm):
     size=im.shape
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=np.abs(img.constructModel(bvals,coeffs,[xc,yc],size))
+    mdl=np.abs(img.constructModel(bvals,coeffs,size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2nmaxPolarFunc(params,im,nm,beta0,beta1,phi,xc):
@@ -158,7 +204,7 @@ def chi2nmaxPolarFunc(params,im,nm,beta0,beta1,phi,xc):
     r,th=shapelet.polarArray(xc,size)
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
     coeffs=solveCoeffs(bvals,im)
-    mdl=np.abs(img.constructModel(bvals,coeffs,xc,size))
+    mdl=np.abs(img.constructModel(bvals,coeffs,size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2Func(params,nmax,im,nm):
@@ -194,7 +240,7 @@ def chi2Func(params,nmax,im,nm):
 
     bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2betaFunc(params,xc,yc,nmax,im,nm):
@@ -227,7 +273,7 @@ def chi2betaFunc(params,xc,yc,nmax,im,nm):
 
     bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2xcFunc(params,beta0,beta1,phi,nmax,im,nm):
@@ -253,7 +299,7 @@ def chi2xcFunc(params,beta0,beta1,phi,nmax,im,nm):
 
     bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,[xc,yc],size)
+    mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
@@ -277,7 +323,7 @@ def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
 
     bvals=genBasisMatrix([beta0,beta1],nmax,phi,xx,yy)
     coeffs=solveCoeffs(bvals,im)
-    mdl=img.constructModel(bvals,coeffs,xc,size)
+    mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
 if __name__ == "__main__":
@@ -286,20 +332,22 @@ if __name__ == "__main__":
     print 'Testing decomp module:'
     print '============================================'
     import fileio
+    import sys
     write_files = False #Flag to write coeff files
     tc=0
     te=0
     
     im,hdr=fileio.readFITS('../data/N6251_test.fits',hdr=True)
-    subim=img.selPxRange(im,[170,335,195,309])
+    subim=img.selPxRange(im,[1028,1097,1025,1074])
     
     #guess beta
-    #initBeta(im,frac=.25,nmax=5):
-    #initBeta2(im,frac=.2):
+    #initBeta(im):
     tc+=1
     try:
-        print initBeta(subim,frac=.25,nmax=5)
-        print initBeta2(subim,frac=.2)
+        beta0,phi0=initBetaPhi(subim,mode='basic')
+        print beta0, phi0
+        beta0,phi0=initBetaPhi(subim,mode='fit')
+        print beta0, phi0
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
@@ -308,7 +356,7 @@ if __name__ == "__main__":
     #solveCoeffs(m,im):
     tc+=1
     try:
-        beta0=initBeta2(subim,frac=.2)
+        beta0,phi0=initBetaPhi(subim,mode='fit')
         xc=img.maxPos(subim)
         r0,th0=shapelet.polarArray(xc,subim.shape)
         mPolar=genPolarBasisMatrix(beta0,5,0.,r0,th0)
@@ -323,12 +371,12 @@ if __name__ == "__main__":
     #solveCoeffs(m,im):
     tc+=1
     try:
-        beta0=initBeta2(subim,frac=.2)
+        beta0,phi0=initBetaPhi(subim,mode='fit')
         xc=img.maxPos(subim)
         rx=np.array(range(0,subim.shape[0]),dtype=float)-xc[0]
         ry=np.array(range(0,subim.shape[1]),dtype=float)-xc[1]
         xx,yy=shapelet.xy2Grid(rx,ry)
-        mCart=genBasisMatrix(beta0,[5,5],0.,xx,yy)
+        mCart=genBasisMatrix(beta0,[5,5],phi0,xx,yy)
         coeffs=solveCoeffs(mCart,subim)
         print coeffs
         if write_files: fileio.writeHermiteCoeffs('testHermite.pkl',coeffs,xc,subim.shape,beta0,0.,5,pos=[hdr['ra'],hdr['dec'],hdr['dra'],hdr['ddec']],info='Test Hermite coeff file')
@@ -336,13 +384,12 @@ if __name__ == "__main__":
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    beta0=initBeta2(subim,frac=.2)
+    beta0,phi0=initBetaPhi(subim,mode='fit')
     xc=img.maxPos(subim)
-    nm=img.estimateNoiseMap(im,region=[170,335,195,309])
-    nm=img.selPxRange(nm,[170,335,195,309])
+    mean,std=img.estimateNoise(subim,mode='basic')
+    nm=img.makeNoiseMap(subim.shape,mean,std)
 
     #chi2PolarFunc(params,nmax,im,nm):
-    tc+=1
     try:
         func0=chi2PolarFunc([beta0[0],beta0[1],0.,xc[0],xc[1]],5,subim,nm)
         print func0

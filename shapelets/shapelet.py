@@ -63,7 +63,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2))
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs
     exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2))
-
+    
     return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
 
 #TODO: make into an elliptical form?
@@ -101,13 +101,13 @@ def cartArray(xc,size):
     ry=np.array(range(0,size[0]),dtype=float)-xc[1]
     rx=np.reshape(np.tile(rx,size[0]),(size[0],size[1]))
     ry=np.reshape(np.tile(ry,size[1]),(size[1],size[0]))
-    return rx,ry.T
+    return rx.T,ry
 
 def xy2Grid(rx,ry):
     """Convert a range of x and y to a grid of shape (len(x),len(y))"""
     rx0=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
     ry0=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
-    return rx0,ry0.T
+    return rx0.T,ry0
 
 def xy2rthGrid(rx,ry):
     """Convert a range of x and y to r,th arrays of shape (len(x),len(y))"""
