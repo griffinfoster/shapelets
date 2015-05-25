@@ -59,6 +59,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     if fourier:
         beta=[1./beta[0],1./beta[1]]
         phs=1j**(n0+n1)
+        #print beta
     b[0]*=(beta[0]**(-.5))*(((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5))*phs
     exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2))
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs

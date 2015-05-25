@@ -19,6 +19,7 @@ Based on the shapelet framework developed in [Shapelets: I. A Method for Image A
 * scipy 
 * pyfits 
 * json
+* pywcs
 
 #### Recommended Python Modules
 ===

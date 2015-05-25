@@ -73,37 +73,68 @@ def initBetaPhi(im,mode='basic',frac=.2,circular=False):
             return [width,width],p[4]
         else: return [p[2],p[3]],p[4]
 
-def genPolarBasisMatrix(beta,nmax,phi,r,th):
+def genPolarBasisFuncs(beta,nmax,phi,fourier=False):
+    """Generate a list of basis functions
+    beta: characteristic size of the shapelets (b_major, b_minor)
+    nmax: maximum decomposition order
+    phi: rotation angle
+    fourier: return a FOurer transformed version of the basis functions
+    """
+    bfs=[]
+    if type(nmax) is int: nmax=[nmax,nmax]
+    for nn in range(nmax[0]):
+        for mm in np.arange(-1*nn,nn+1):
+            if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
+                bfs.append(shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi,fourier=fourier))
+    return bfs
+
+def genPolarBasisMatrix(beta,nmax,phi,r,th,fourier=False):
     """Generate the n x k matrix of basis functions(k) for each pixel(n)
     beta: characteristic size of the shapelets (b_major, b_minor)
     nmax: maximum decomposition order
     phi: rotation angle
     r: radius matrix of n pixels
     th: theta matrix of n pixels
+    fourier: return a FOurer transformed version of the basis functions
     """
     bvals=[]
     if type(nmax) is int: nmax=[nmax,nmax]
     for nn in range(nmax[0]):
         for mm in np.arange(-1*nn,nn+1):
             if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
-                bf=shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi)
+                bf=shapelet.polarDimBasis(nn,mm,beta=beta,phi=phi,fourier=fourier)
                 bvals.append(shapelet.computeBasisPolar(bf,r,th).flatten())
     bm=np.array(bvals)
     return bm.transpose()
 
-def genBasisMatrix(beta,nmax,phi,rx,ry):
+def genBasisFuncs(beta,nmax,phi,fourier=False):
+    """Generate a list of basis functions
+    beta: characteristic size of the shapelets (b_major, b_minor)
+    nmax: maximum decomposition order
+    phi: rotation angle
+    fourier: return a FOurer transformed version of the basis functions
+    """
+    bfs=[]
+    if type(nmax) is int: nmax=[nmax,nmax]
+    for x in range(nmax[0]):
+        for y in range(nmax[1]):
+            bfs.append(shapelet.dimBasis2d(x,y,beta=beta,phi=phi,fourier=fourier))
+    return bfs
+
+def genBasisMatrix(beta,nmax,phi,rx,ry,fourier=False):
     """Generate the n x k matrix of basis functions(k) for each pixel(n)
     nmax: maximum decompisition order
     beta: characteristic size of the shapelet
     phi: rotation angle
     rx: range of x values to evaluate basis functions
     ry: range of y values to evaluate basis functions
+    fourier: return a FOurer transformed version of the basis functions
     """
     bvals=[]
     if type(nmax) is int: nmax=[nmax,nmax]
     for x in range(nmax[0]):
         for y in range(nmax[1]):
-            bf=shapelet.dimBasis2d(x,y,beta=beta,phi=phi)
+            bf=shapelet.dimBasis2d(x,y,beta=beta,phi=phi,fourier=fourier)
             bvals.append(shapelet.computeBasis2d(bf,rx,ry).flatten())
     bm=np.array(bvals)
     return bm.transpose()

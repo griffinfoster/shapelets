@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """
-Replace measurement set vis data with a shapelet model
+Insert a shapelet coefficient file into the visibilities of a measurement set
 """
 
 import sys
-import distutils.dir_util
 import numpy as np
+import scipy.constants
+from matplotlib import pyplot as plt
 import shapelets
 import pyrap.tables as pt
-
-import pylab as p
+import distutils.dir_util
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -18,8 +18,8 @@ if __name__ == '__main__':
     o.set_description(__doc__)
     o.add_option('-c', '--coeff', dest='cfn', default=None,
         help='Shapelet coefficient file, default: None')
-    o.add_option('-m', '--mode', dest='mode', default='replace',
-        help='\'replace\': Replace the visibilities, \'add\': add to the visibilites, default: replace')
+    o.add_option('-m', '--mode', dest='mode', default='add',
+        help='\'replace\': Replace the visibilities, \'add\': add to the visibilites, \'subtract\': subtract from visibilites, default: add')
     o.add_option('-d', '--data_column', dest='data_column', default='DATA',
         help='Data column to take visibilities from/write to default: DATA')
     o.add_option('-o', '--outfile', dest='ofn', default=None,
@@ -32,103 +32,92 @@ if __name__ == '__main__':
     if opts.cfn is None:
         sys.exit('error:missing shapelet coefficient file')
     d=shapelets.fileio.readCoeffs(opts.cfn)
-    
-    #generate inverse basis functions
-    print 'RA: %f\t DEC: %f\t DRA: %f\t DDEC: %f\t'%(d['ra'],d['dec'],d['dra'],d['ddec'])
-    beta=[d['beta'][0]*d['dra'],d['beta'][1]*d['ddec']]
-    print 'BETA: (%f,%f)\t INVERSE: (%f,%f)'%(beta[0],beta[1],1./beta[0],1./beta[1])
+
+    #scale beta to radians
+    rotM=np.matrix([[np.cos(d['phi']),-1.*np.sin(d['phi'])],[np.sin(d['phi']),np.cos(d['phi'])]])
+    rotDeltas=(np.pi/180.)*np.dot(rotM,np.array([d['dra'],d['ddec']])) #rotate delta RA and delta Dec, convert from degrees to radians
+    betaRad=np.abs(np.multiply(np.array([d['beta']]),rotDeltas))
+
+    #TODO: option: rephase to insert shapelet anywhere, default: at phase centre (?) is there a computationally easier way?
+    #assume the shapelet is being insert at the phase centre (l,m)=(0,0)
+
+    #generate basis functions
     print 'generating UV Basis Functions...',
-    sys.stdout.flush()
     if d['mode'].startswith('herm'):
-        bfs=shapelets.shapelet.ftHermiteBasis([(np.pi/180.)*beta[0],(np.pi/180.)*beta[1]],d['norder'])
+        #bfs=shapelets.decomp.genBasisFuncs([betaRad[0,0],betaRad[0,1]],d['norder'],d['phi'],fourier=True)
+        print [betaRad[0,0],betaRad[0,1]]
+        bfs=shapelets.decomp.genBasisFuncs([betaRad[0,0]*10.,betaRad[0,1]*10.],d['norder'],d['phi'],fourier=True) #TODO: my beta scaling looks to be off by a factor of 10!
+        #bfs=shapelets.decomp.genBasisFuncs([.05,.05],d['norder'],d['phi'],fourier=True)
     elif d['mode'].startswith('lag'):
-        bfs=shapelets.shapelet.ftLaguerreBasis(d['dra'],d['norder'])
-    print 'done'
+        bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0,0],betaRad[0,1]],d['norder'],d['phi'],fourier=True)
+    print len(bfs), 'done'
 
-    #image->uv transform limits
-    dra=d['dra']*np.pi/180.
-    ddec=d['ddec']*np.pi/180.
-    rx=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
-    ry=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-    usize=(float(len(ry))/float(len(rx)))*1./(np.abs(rx[0]-rx[1])*dra) #!!!
-    vsize=(float(len(rx))/float(len(ry)))*1./(np.abs(ry[0]-ry[1])*ddec) #!!!
-    #print usize,vsize
-    ures=(float(len(ry))/float(len(rx)))*1./(np.abs(rx[0]-rx[-1])*dra) #!!!
-    vres=(float(len(rx))/float(len(ry)))*1./(np.abs(ry[0]-ry[-1])*ddec) #!!!
-    #print ures,vres
-    umin=ures*(rx[0]+.5)
-    vmin=vres*(ry[0]+.5)
-    uu=np.arange(0,usize+ures,ures)+umin
-    vv=np.arange(0,vsize+vres,vres)+vmin
-    uRange=[uu[0],uu[-1]]
-    vRange=[vv[0],vv[-1]]
-
+    #load MS, get visibilites and u,v,w positions
     data_column=opts.data_column.upper()
-    for fn in args:
-        print 'working on:',fn
-        ms=pt.table(fn,readonly=False)
-        uvw=ms.col('UVW')
-        uvwData=uvw.getcol()
-        
+    for fid,fn in enumerate(args):
+        print 'working on: %s (%i of %i)'%(fn,fid+1,len(args))
+        #ms=pt.table(fn,readonly=False)
+        ms=pt.table(fn,readonly=True)
+        uvw=ms.col('UVW').getcol() # [vis id, (u,v,w)]
+        vis=ms.col(data_column).getcol() #[vis id, freq id, stokes id]
+        #print uvw.shape, vis.shape
+        #print uvw
+
         #gather channel frequency information
         sw=pt.table(fn+'/SPECTRAL_WINDOW')
-        chan_freqs=sw.col('CHAN_FREQ')
-        freqs=chan_freqs.getcol()
-        cc=299792458.0
-        u=uvwData[:,0]
-        v=uvwData[:,1]
-        u=np.reshape(u,(uvwData.shape[0],1))
-        v=np.reshape(v,(uvwData.shape[0],1))
+        freqs=sw.col('CHAN_FREQ').getcol()
+        cc=scipy.constants.c
+        uu=uvw[:,0]
+        vv=uvw[:,1]
+        uu=np.reshape(uu,(uvw.shape[0],1))
+        vv=np.reshape(vv,(uvw.shape[0],1))
         #convert u,v to units of wavelengths
-        u=(u*freqs.T)/cc
-        v=(v*freqs.T)/cc
+        uu=(uu*freqs)/cc
+        vv=(vv*freqs)/cc
         sw.close()
 
-        #bvals=[]
-        #for bf in bfs:
-        #    bvals.append(shapelets.shapelet.computeBasis2d(bf,uu,vv).flatten())
-        #bm=np.array(bvals)
-        #mdl_ft=shapelets.img.constructModel(bm.transpose(),d['coeffs'],[len(uu),len(vv)])
-        #p.imshow(np.abs(mdl_ft))
-        #p.show()
-        
-        #filter out UV samples
-        uvFilter=((u>uRange[0]) & (u<uRange[1]) & ((v>vRange[0]) & (v<vRange[1])))
-        uvIndex=np.argwhere(uvFilter)
-        u0=u[uvFilter]
-        v0=v[uvFilter]
+        #plt.plot(uu.flatten(),vv.flatten(),'r.')
+        #plt.show()
 
-        #compute the UV complex correlation from coefficients and basis functions
-        print '\tcomputing new UV visibilities...',
-        sys.stdout.flush()
-        if d['mode'].startswith('herm'):
-            sVis=shapelets.uv.computeHermiteUV(bfs,d['coeffs'],u0,v0)
-        elif d['mode'].startswith('lag'):
-            sVis=shapelets.uv.computeLaguerreUV(bfs,d['coeffs'],u,v)
+        #evaulate basis functions at each u,v postion
+        #TODO: with only real valued visibilities then there is mirror symetry in the image plane, where are the imaginary components?
+        print 'Evaluating shapelet basis functions for all (u,v) positions'
+        shapeVis=np.zeros_like(vis[:,:,0]).flatten() #only doing this for Stokes I
+        for bfid,bf in enumerate(bfs):
+            #print d['coeffs'][bfid]
+            #print np.max(shapelets.shapelet.computeBasis2d(bf,uu.flatten(),vv.flatten()))
+            shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,uu.flatten(),vv.flatten())
+        #shapeVis+=1.*shapelets.shapelet.computeBasis2d(bfs[1],uu.flatten(),vv.flatten())
+        shapeVis=np.reshape(shapeVis,uu.shape)
+        print 'done'
+        #print shapeVis
+
+        #update visibilites
+        #TODO: assuming fully linear polarization for the moment it is all going into the X receptor, this needs to be properly fixed
+        print 'Updating visibilities (mode:%s)'%opts.mode
+        if opts.mode.startswith('replace'):
+            newVis=np.zeros_like(vis)
+            newVis[:,:,0]=shapeVis
+        elif opts.mode.startswith('add'):
+            newVis=vis
+            newVis[:,:,0]+=shapeVis
+        elif opts.mode.startswith('sub'):
+            newVis=vis
+            newVis[:,:,0]-=shapeVis
+        else:
+            print 'Unknown MS update mode, the MS will be left unchanged'
         print 'done'
 
-        #uv coverage plot
-        p.scatter(u0,v0,c=np.abs(sVis)/np.max(np.abs(sVis)),edgecolor='none')
-        p.show()
-
-        vis=ms.col(data_column)
-        visData=vis.getcol()
-        visShape=visData.shape
-        newVis=np.zeros_like(visData)
-        xxVis=newVis[:,:,0]
-        xxVis[uvIndex[:,0],0]=sVis
-        newVis[:,:,0]=xxVis     #only writing to the XX data
-        
-        if opts.mode.startswith('add'): newVis+=visData
+        ms.close()
         if opts.overwrite:
-            ms.putcol(data_column, newVis)
-            ms.close()
+            oms=pt.table(fn,readonly=False)
+            oms.putcol(data_column, newVis)
+            oms.close()
         else:
-            ms.close()
             ofn=fn+'.shape'
             print '\twriting to:',ofn
             distutils.dir_util.copy_tree(fn,ofn)
-            ms=pt.table(ofn,readonly=False)
-            vis=ms.col(data_column)
-            ms.putcol(data_column, newVis)
+            oms=pt.table(ofn,readonly=False)
+            oms.putcol(data_column, newVis)
+            oms.close()
 

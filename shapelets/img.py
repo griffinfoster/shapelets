@@ -121,6 +121,7 @@ def polarCoeffImg(coeffs,nmax):
                 cnt+=1
     return im
 
+#TODO: this is wrong
 def xc2radec(xc,hdr,offset=[0.,0.]):
     """Return the RA,DEC position for a centroid (x,y) pair based on FITS header
     offset: x,y offset from full image
@@ -129,6 +130,7 @@ def xc2radec(xc,hdr,offset=[0.,0.]):
     dec=(hdr['decPix']-(offset[1]+xc[1]))*hdr['ddec']+hdr['dec']
     return ra,dec
 
+#TODO: this is wrong
 def beta2size(beta,hdr=None,dra=1.,ddec=1.):
     """Convert a beta pixel size to celestial size
     requires either FITS header (hdr) or the delta RA (dra) and delta DEC (ddec)

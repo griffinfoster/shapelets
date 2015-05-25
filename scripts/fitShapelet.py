@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import matplotlib.patches
 from scipy import optimize
 import shapelets
+import pywcs
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
-    im0=shapelets.fileio.readFITS(ifn)
+    im0,hdr=shapelets.fileio.readFITS(ifn,hdr=True)
     extent=[0,im0.shape[0],0,im0.shape[1]]
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
@@ -228,9 +229,15 @@ if __name__ == '__main__':
         plt.pcolor(cim)
         plt.colorbar()
 
+        #determine (RA,dec) coordinates for centroid position
+        if extent is None:
+            radec=hdr['wcs'].wcs_pix2sky(np.array([xc1]),1)[0] #unit: degrees
+        else:
+            radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
+
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax1,info=ifn)
+        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
     else:
         rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
@@ -350,9 +357,15 @@ if __name__ == '__main__':
         plt.pcolor(sqCoeffs)
         plt.colorbar()
         
+        #determine (RA,dec) coordinates for centroid position
+        if extent is None:
+            radec=hdr['wcs'].wcs_pix2sky(np.array([xc1]),1)[0] #unit: degrees
+        else:
+            radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
+
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn)
+        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)

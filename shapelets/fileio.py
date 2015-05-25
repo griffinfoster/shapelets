@@ -8,6 +8,7 @@ import numpy as np
 import cPickle as pickle
 import sys
 import json
+import pywcs
 
 #optional packages:
 try:
@@ -19,10 +20,42 @@ def readFITS(fn,hdr=False):
     """
     hdulist=pf.open(fn)
     im=hdulist[0].data
+    #image data format: [frequency, polarization, x, y]
     hdulist.close()
-    if hdr:
-        return im[0,0],getFITSInfo(fn)
+    if hdr: return im[0,0],getFITSInfo(fn)
     else: return im[0,0]
+
+def getFITSInfo(fn):
+    """Parse the FITS header for pointing and pixel size information
+    return [RA,DEC], pixel resolution, pixel of [RA,DEC]
+    generates a WCS instance for converting between sky and pixels
+    """
+    hdulist=pf.open(fn)
+    hdr=hdulist[0].header
+    #CTYPE1: RA---[PROJ], projection SIN/TAN/ARC
+    #CRVAL1: reference RA position in degrees
+    #CRPIX1: location of reference pixel
+    #CDELT1: delta RA/pixel size in degrees
+    #CTYPE2: DEC--[PROJ], projection SIN/TAN/ARC
+    #CRVAL2: reference DEC position in degrees
+    #CRPIX2: location of reference pixel
+    #CDELT2: delta DEC/pixel size in degrees
+    #LATPOL: latitude of array centre
+    ra=hdr['CRVAL1']
+    dra=hdr['CDELT1']
+    raPix=hdr['CRPIX1']
+    dec=hdr['CRVAL2']
+    ddec=hdr['CDELT2']
+    decPix=hdr['CRPIX2']
+    #Generate a WCS structure, using the normal method creates errors due to header formating
+    wcs = pywcs.WCS(naxis=2)
+    wcs.wcs.crval = [ra,dec]
+    wcs.wcs.crpix = [raPix,decPix]
+    wcs.wcs.cdelt = [dra,ddec]
+    wcs.wcs.ctype = ["RA---SIN", "DEC--SIN"]
+
+    hdulist.close()
+    return {'ra':ra,'dec':dec,'dra':dra,'ddec':ddec,'raPix':raPix,'decPix':decPix, 'wcs':wcs}
 
 def readImg(fn,gs=False):
     """Read an image file using PIL libraries and return a numpy array
@@ -41,29 +74,6 @@ def readArrayPkl(fn):
     fh.close()
     return im
 
-def getFITSInfo(fn):
-    """Parse the FITS header for pointing and pixel size information
-    return [RA,DEC], pixel resolution, pixel of [RA,DEC]
-    """
-    hdulist=pf.open(fn)
-    hdr=hdulist[0].header
-    #CTYPE1: RA---[PROJ], projection SIN/TAN/ARC
-    #CRVAL1: reference RA position in degrees
-    #CRPIX1: location of reference pixel
-    #CDELT1: delta RA/pixel size in degrees
-    #CTYPE2: DEC--[PROJ], projection SIN/TAN/ARC
-    #CRVAL2: reference DEC position in degrees
-    #CRPIX2: location of reference pixel
-    #CDELT2: delta DEC/pixel size in degrees
-    ra=hdr['CRVAL1']
-    dra=hdr['CDELT1']
-    raPix=hdr['CRPIX1']
-    dec=hdr['CRVAL2']
-    ddec=hdr['CDELT2']
-    decPix=hdr['CRPIX2']
-    hdulist.close()
-    return {'ra':ra,'dec':dec,'dra':dra,'ddec':ddec,'raPix':raPix,'decPix':decPix}
-
 def writeHermiteCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode='hermite',info='',fmt='pkl'):
     """Write hermite coeffs and meta data to a pickle file
     fn: output file name
@@ -74,7 +84,7 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode=
     phi: rotation angle
     norder: order of polynomials
     mode: basis function mode
-    pos: 4 element array of RA,DEC and scale size from FITS header
+    pos: 4 element array of RA,DEC and scale size from FITS header (degrees)
     info: extra metadata space
     fmt: output formats supported: pkl (pickle), json
     """
@@ -133,7 +143,7 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode
     phi: rotation angle
     norder: max order of polynomials
     mode: basis function mode
-    pos: 4 element array of RA,DEC and scale size from FITS header
+    pos: 4 element array of RA,DEC and scale size from FITS header (degrees)
     info: extra metadata space
     fmt: output formats supported: pkl (pickle), json
     """

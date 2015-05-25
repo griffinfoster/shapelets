@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.patches
 import shapelets
+import pywcs
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -37,8 +38,9 @@ if __name__ == '__main__':
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
-    im0=shapelets.fileio.readFITS(ifn)
+    im0,hdr=shapelets.fileio.readFITS(ifn,hdr=True)
     extent=[0,im0.shape[0],0,im0.shape[1]]
+
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
         im=shapelets.img.selPxRange(im0,extent)
@@ -85,6 +87,12 @@ if __name__ == '__main__':
 
     print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[0],beta0[1],phi0,xc[0],xc[1],nmax[0]-1,nmax[1]-1)
 
+    #determine (RA,dec) coordinates for centroid position
+    if extent is None:
+        radec=hdr['wcs'].wcs_pix2sky(np.array([xc]),1)[0] #unit: degrees
+    else:
+        radec=hdr['wcs'].wcs_pix2sky(np.array([[xc[0]+extent[0],xc[1]+extent[2]]]),1)[0] #unit: degrees
+
     if opts.mode.startswith('pol'):
         r0,th0=shapelets.shapelet.polarArray(xc,im.shape)
 
@@ -126,7 +134,7 @@ if __name__ == '__main__':
 
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn)
+        shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
     else:
 
@@ -169,7 +177,7 @@ if __name__ == '__main__':
         
         ofn=opts.ofn
         print 'Writing to file:',ofn
-        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn)
+        shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)

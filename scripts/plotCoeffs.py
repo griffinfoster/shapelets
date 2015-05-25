@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """
+Plot a Shaplet coefficient file
 """
 
 import sys
@@ -14,6 +15,8 @@ if __name__ == '__main__':
     o.set_description(__doc__)
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
+    o.add_option('-f', '--ft', dest='fourier', action='store_true',
+        help='Perform a Fourier transform on the basis functions')
     opts, args = o.parse_args(sys.argv[1:])
 
     ifn=args[0]
@@ -24,18 +27,21 @@ if __name__ == '__main__':
         rx=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
         ry=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
         xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],d['phi'],xx,yy)
+        bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],d['phi'],xx,yy,fourier=opts.fourier)
         mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['size'])
 
         #coeffs
         coeffs=np.reshape(d['coeffs'],d['norder'])
 
-        plt.suptitle('Hermite')
+        if opts.fourier:
+            ptitle='Fourier(Hermite)'
+        else:
+            ptitle='Hermite'
 
     elif d['mode'].startswith('lag'):
         #model
         r0,th0=shapelets.shapelet.polarArray(d['xc'],d['size'])
-        bvals=shapelets.decomp.genPolarBasisMatrix(d['beta'],d['norder'],d['phi'],r0,th0)
+        bvals=shapelets.decomp.genPolarBasisMatrix(d['beta'],d['norder'],d['phi'],r0,th0,fourier=opts.fourier)
         mdl=np.abs(shapelets.img.constructModel(bvals,d['coeffs'],d['size']))
 
         #coeffs
@@ -45,15 +51,19 @@ if __name__ == '__main__':
         cimI=np.fliplr(cimI)
         coeffs=np.concatenate((cimR,cimI),axis=1)
 
-        plt.suptitle('Laguerre')
+        if opts.fourier:
+            ptitle='Fourier(Laguerre)'
+        else:
+            ptitle='Laguerre'
     
-    plt.subplot(211)
+    plt.suptitle(ptitle)
+    plt.subplot(121)
     plt.title('Model')
-    plt.imshow(mdl)
+    plt.imshow(np.abs(mdl))
     plt.text(d['xc'][1],d['xc'][0],'+')
     plt.colorbar()
 
-    plt.subplot(212)
+    plt.subplot(122)
     plt.title('Coefficients')
     plt.pcolor(coeffs)
     plt.colorbar()
