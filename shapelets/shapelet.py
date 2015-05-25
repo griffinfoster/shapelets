@@ -40,10 +40,10 @@ def basis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     phs=1.
     if fourier:
         beta=[1./beta[0],1./beta[1]]
-        phs=1j**(n0+n1)
-    b[0]*=((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5)*phs
+        phs=[1j**(n0),1j**(n1)]
+    b[0]*=((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5)*phs[0]
     exp0=lambda x: beta[0] * b[0](x) * np.exp(-.5*(x**2))
-    b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)*phs
+    b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)*phs[1]
     exp1=lambda x: beta[1] * b[1](x) * np.exp(-.5*(x**2))
 
     return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
@@ -58,11 +58,10 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     phs=1.
     if fourier:
         beta=[1./beta[0],1./beta[1]]
-        phs=1j**(n0+n1)
-        #print beta
-    b[0]*=(beta[0]**(-.5))*(((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5))*phs
+        phs=[1j**(n0),1j**(n1)]
+    b[0]*=(beta[0]**(-.5))*(((2**n0)*(np.pi**(.5))*factorial(n0))**(-.5))*phs[0]
     exp0=lambda x: b[0](x/beta[0]) * np.exp(-.5*((x/beta[0])**2))
-    b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs
+    b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs[1]
     exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2))
     
     return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
