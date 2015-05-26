@@ -53,8 +53,50 @@ def initGaussian(im):
     phi=0.
     return x, y, sigmax, sigmay, phi, amp, offset
 
+def initParams(im,mode='basic',frac=.2,hdr=None):
+    """Initial guess for beta, phi, nmax
+    mode:
+        basic: beta is determined based on the size of the image and the frac arguement, phi is 0
+        fit: a 2D Gaussian is fit to the image, parameters derived from fit
+            Theta_max = fit Gaussian width
+            Theta_min = PSF FWHM
+            beta ~ sqrt((Theta_max * Theta_min))
+            phi ~ fit Gaussian rotation angle
+            nmax ~ (Theta_max / Theta_min) + 1
+    frac: fraction of image to use as the initial beta (basic)
+    hdr: FITS header dictionary with PSF size (fit)
+    fitting borrowed from: http://wiki.scipy.org/Cookbook/FittingData
+    returns: beta, phi, nmax
+    """
+    if mode.startswith('basic'):
+        return [frac*im.shape[0],frac*im.shape[1]], 0., int((frac/np.max(im.shape))-1)
+    elif mode.startswith('fit'):
+        #fit a 2D Gaussian to the image
+        params=initGaussian(im)
+        errorfunction = lambda p: np.ravel(ellipticalGaussian2D(*p)(*np.indices(im.shape)) - im)
+        p, success = optimize.leastsq(errorfunction, params)
+        Theta_max=2.3548*np.array([p[2],p[3]]) #FWHM
+
+        #compute PSF size in pixels
+        bpa=np.pi*hdr['bpa']/180.
+        bmaj=np.pi*hdr['bmaj']/180.
+        bmin=np.pi*hdr['bmin']/180.
+        dra=np.pi*hdr['dra']/180.
+        ddec=np.pi*hdr['ddec']/180.
+        rotM=np.matrix([[np.cos(bpa),-1.*np.sin(bpa)],[np.sin(bpa),np.cos(bpa)]])
+        rotDeltas=np.dot(rotM,np.array([dra,ddec])) #rotate delta RA and delta Dec
+        psfPix=(np.array([bmaj,bmin])/rotDeltas)/2.3548 #go from FWHM to sigma, it is better to error on the side of higher order structure, then to miss it
+        Theta_min=np.abs(np.array(psfPix).flatten())
+
+        beta=np.sqrt(Theta_max*Theta_min)
+        phi=p[4]
+        print [(Theta_max[0]/Theta_min[0])-1,(Theta_max[1]/Theta_min[1])-1]
+        nmax=[int((Theta_max[0]/Theta_min[0])+1),int((Theta_max[1]/Theta_min[1])+1)]
+        return beta, phi, nmax
+
 def initBetaPhi(im,mode='basic',frac=.2,circular=False):
-    """Initial starting point for beta and phi
+    """Depreciated: use initParams
+    Initial starting point for beta and phi
     mode:
         basic: beta is determined based on the size of the image and the frac arguement, phi is 0
         fit: a 2D Gaussian is fit to the image, parameters derived from fit

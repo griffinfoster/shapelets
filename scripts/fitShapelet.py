@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     #select initial beta, phi, and xc
     if opts.init_beta==None:
-        beta0,phiTemp=shapelets.decomp.initBetaPhi(im,mode='fit')
+        beta0,phi0,nmax0=shapelets.decomp.initParams(im,mode='fit',hdr=hdr)
     else:
         beta0=map(float,opts.init_beta.split(','))
         if len(beta0)==1:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             beta0=[beta0[0],beta0[1]]
 
     if opts.init_phi==None:
-        betaTemp,phi0=shapelets.decomp.initBetaPhi(im,mode='fit')
+        betaTemp,phi0,nmax0=shapelets.decomp.initParams(im,mode='fit',hdr=hdr)
     else:
         phi0=float(opts.init_phi)
     

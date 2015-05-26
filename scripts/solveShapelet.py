@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     #select initial beta, phi, and xc
     if opts.beta==None:
-        beta0,phi0=shapelets.decomp.initBetaPhi(im,mode='fit')
+        beta0,phi0,nmax0=shapelets.decomp.initParams(im,mode='fit',hdr=hdr)
     else:
         beta0=map(float,opts.beta.split(','))
         phi0=float(opts.phi)

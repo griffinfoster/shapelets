@@ -40,13 +40,18 @@ def getFITSInfo(fn):
     #CRVAL2: reference DEC position in degrees
     #CRPIX2: location of reference pixel
     #CDELT2: delta DEC/pixel size in degrees
-    #LATPOL: latitude of array centre
+    #BMAJ: major axis of PSF FWHM ellipse (degrees)
+    #BMIN: minor axis of PSF FWHM ellipse (degrees)
+    #BPA: rotation angle of PSF FWHM ellipse (degrees)
     ra=hdr['CRVAL1']
     dra=hdr['CDELT1']
     raPix=hdr['CRPIX1']
     dec=hdr['CRVAL2']
     ddec=hdr['CDELT2']
     decPix=hdr['CRPIX2']
+    bmaj=hdr['BMAJ']
+    bmin=hdr['BMIN']
+    bpa=hdr['BPA']
     #Generate a WCS structure, using the normal method creates errors due to header formating
     wcs = pywcs.WCS(naxis=2)
     wcs.wcs.crval = [ra,dec]
@@ -55,7 +60,7 @@ def getFITSInfo(fn):
     wcs.wcs.ctype = ["RA---SIN", "DEC--SIN"]
 
     hdulist.close()
-    return {'ra':ra,'dec':dec,'dra':dra,'ddec':ddec,'raPix':raPix,'decPix':decPix, 'wcs':wcs}
+    return {'ra':ra,'dec':dec,'dra':dra,'ddec':ddec,'raPix':raPix,'decPix':decPix, 'wcs':wcs, 'bmaj':bmaj, 'bmin':bmin, 'bpa':bpa}
 
 def readImg(fn,gs=False):
     """Read an image file using PIL libraries and return a numpy array
