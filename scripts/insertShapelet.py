@@ -6,8 +6,9 @@ Insert a shapelet coefficient file into the visibilities of a measurement set
 import sys
 import numpy as np
 import scipy.constants
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 import shapelets
+import shapelets.phs
 import pyrap.tables as pt
 import distutils.dir_util
 
@@ -27,7 +28,19 @@ if __name__ == '__main__':
     o.add_option('-X','--over', dest='overwrite', action="store_true", default=False,
         help='Over write original visibilities')
     o.add_option('-S','--scale',dest='rescale', default=None,
-        help='A flux scaling factor. This is useful if the model was derived from an averaged wideband image and the coefficients need to be rescaled to reverse the averaging. A value of 1 will cause no rescaling Default: Number of channels in the MS')
+        help='A flux scaling factor. This is useful if the model was derived from an averaged wideband image and the coefficients need to be rescaled to reverse the averaging, in this situation the rescaling value should be the number of channels imaged. A value of 1 will cause no rescaling Default: Number of channels in the MS')
+
+    #rephasing options
+    o.add_option('-p','--phs',dest='phsMode', default='centre',
+        help='Placement of source by phase rotating the visibilities, options are centre: the model is inserted at the phase centre no phase rotation is performed ; source: visibilities are rotated to make the centroid of the model the phase centre, then rotated back to the original phase centre ; manual: a manually input (RA,dec) is rotated to and the source inserted. default: centre')
+    o.add_option('--ra', dest='ra', default=None,
+        help='RA (in radians unless flag set) to phase data to')
+    o.add_option('--dec', dest='dec', default=None,
+        help='DEC (in radians unless flag set) to phase data to')
+    o.add_option('--deg',dest='deg_flag',action='store_true',
+        help='Use degrees instead of radians')
+    o.add_option('--str',dest='str_flag', action='store_true',
+        help='Use hh:mm:ss.sss format for RA and dd:mm:ss.sss format for DEC')
     opts, args = o.parse_args(sys.argv[1:])
 
     #load coefficient file
@@ -42,9 +55,6 @@ if __name__ == '__main__':
 
     print d['beta'],(np.pi/180.)*np.array([d['dra'],d['ddec']]),rotDeltas,betaRad
 
-    #TODO: option: rephase to insert shapelet anywhere, default: at phase centre (?) is there a computationally easier way?
-    #assume the shapelet is being insert at the phase centre (l,m)=(0,0)
-
     #generate basis functions
     print 'generating UV Basis Functions...',
     if d['mode'].startswith('herm'):
@@ -53,20 +63,71 @@ if __name__ == '__main__':
         bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0,0],betaRad[0,1]],d['norder'],d['phi'],fourier=True)
     print len(bfs), 'done'
 
+    #parse where to insert the shapelet model
+    if opts.phsMode.startswith('manual'):
+        if opts.ra is None or opts.dec is None:
+            print 'ERROR: RA or DEC not set'
+            exit(1)
+
+        if opts.deg_flag:
+            ra=np.pi*float(opts.ra)/180.
+            dec=np.pi*float(opts.dec)/180.
+        elif opts.str_flag:
+            raArr=map(float,opts.ra.split(':'))
+            ra=15.*(raArr[0]+raArr[1]/60.+raArr[2]/3600.)
+            ra=np.pi*ra/180.
+            decArr=map(float,opts.dec.split(':'))
+            dec=np.abs(decArr[0])+decArr[1]/60.+decArr[2]/3600.
+            if decArr[0] < 0.: dec*=-1.
+            dec=np.pi*dec/180.
+        else:
+            ra=float(opts.ra)
+            dec=float(opts.dec)
+        phsRotate=True
+    elif opts.phsMode.startswith('source'):
+        ra=np.pi*d['ra']/180.
+        dec=np.pi*d['dec']/180.
+        phsRotate=True
+    else:
+        phsRotate=False
+
+    if phsRotate:
+        print 'Inserting shapelet model at RA=%f Dec=%f (mode=%s)'%(ra,dec,opts.phsMode)
+    else: 
+        print 'Inserting shapelet model at phase centre'
+
     #load MS, get visibilites and u,v,w positions
     data_column=opts.data_column.upper()
     for fid,fn in enumerate(args):
-        print 'working on: %s (%i of %i)'%(fn,fid+1,len(args))
-        #ms=pt.table(fn,readonly=False)
-        ms=pt.table(fn,readonly=True)
-        uvw=ms.col('UVW').getcol() # [vis id, (u,v,w)]
-        vis=ms.col(data_column).getcol() #[vis id, freq id, stokes id]
+
+        if opts.overwrite:
+            ofn=fn
+        else:
+            ofn=fn+'.shape'
+            distutils.dir_util.copy_tree(fn,ofn)
+        print 'working on: %s (%i of %i)'%(ofn,fid+1,len(args))
+
+        #get the initial phase centre
+        field=pt.table(ofn+'/FIELD')
+        phaseCentre=field.col('PHASE_DIR').getcol()[0,0]
+        field.close()
+        if phsRotate:
+            print 'Phasing to RA: %1.10f, DEC: %1.10f'%(ra,dec)
+            MS=shapelets.phs.ClassMS.ClassMS(ofn,Col=data_column)
+            MS.RotateMS((ra,dec))
+            MS.SaveVis(Col=data_column)
+            print 'done'
+
+        MS=pt.table(ofn,readonly=True)
+        uvw=MS.col('UVW').getcol() # [vis id, (u,v,w)]
+        vis=MS.col(data_column).getcol() #[vis id, freq id, stokes id]
         #print uvw.shape, vis.shape
         #print uvw
+        MS.close()
 
         #gather channel frequency information
-        sw=pt.table(fn+'/SPECTRAL_WINDOW')
-        freqs=sw.col('CHAN_FREQ').getcol()
+        SW=pt.table(ofn+'/SPECTRAL_WINDOW')
+        freqs=SW.col('CHAN_FREQ').getcol()
         cc=scipy.constants.c
         uu=uvw[:,0]
         vv=uvw[:,1]
@@ -75,7 +136,7 @@ if __name__ == '__main__':
         #convert u,v to units of wavelengths
         uu=(uu*freqs)/cc
         vv=(vv*freqs)/cc
-        sw.close()
+        SW.close()
 
         #rescaling value
         #flux scaling is too low if the model was derived form a wideband averaged image, in that case the correct rescaling is the number of channels
@@ -114,17 +175,18 @@ if __name__ == '__main__':
         else:
             print 'Unknown MS update mode, the MS will be left unchanged'
         print 'done'
+        
+        print 'writing to:',ofn
+        MS=pt.table(ofn,readonly=False)
+        MS.putcol(data_column, newVis)
+        MS.close()
+        print 'done'
 
-        ms.close()
-        if opts.overwrite:
-            oms=pt.table(fn,readonly=False)
-            oms.putcol(data_column, newVis)
-            oms.close()
-        else:
-            ofn=fn+'.shape'
-            print '\twriting to:',ofn
-            distutils.dir_util.copy_tree(fn,ofn)
-            oms=pt.table(ofn,readonly=False)
-            oms.putcol(data_column, newVis)
-            oms.close()
+        if phsRotate:
+            print 'Phase rotating back to original phase centre...'
+            print 'Phasing to RA: %1.10f, DEC: %1.10f'%(phaseCentre[0],phaseCentre[1])
+            MS=shapelets.phs.ClassMS.ClassMS(ofn,Col=data_column)
+            MS.RotateMS((phaseCentre[0],phaseCentre[1]))
+            MS.SaveVis(Col=data_column)
+            print 'done'
 
