@@ -121,8 +121,6 @@ if __name__ == '__main__':
         MS=pt.table(ofn,readonly=True)
         uvw=MS.col('UVW').getcol() # [vis id, (u,v,w)]
         vis=MS.col(data_column).getcol() #[vis id, freq id, stokes id]
-        #print uvw.shape, vis.shape
-        #print uvw
         MS.close()
 
         #gather channel frequency information
@@ -145,20 +143,16 @@ if __name__ == '__main__':
         else: rescale=float(opts.rescale)
         print 'Rescale factor: %f'%rescale
 
-        #plt.plot(uu.flatten(),vv.flatten(),'r.')
-        #plt.show()
-
         #evaulate basis functions at each u,v postion
         print 'Evaluating shapelet basis functions for all (u,v) positions'
         shapeVis=np.zeros_like(vis[:,:,0]).flatten() #only doing this for Stokes I
         for bfid,bf in enumerate(bfs):
             #TODO: visibilites seem to be rotated by 90 degrees
             #TODO: i think this line is correct, but the rotation and mirroring leads me to use the line below -> shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,uu.flatten(),vv.flatten())
-            shapeVis+=rescale*d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),-1.*uu.flatten())
+            shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),-1.*uu.flatten())
         #shapeVis+=1.*shapelets.shapelet.computeBasis2d(bfs[1],uu.flatten(),vv.flatten())
-        shapeVis=np.reshape(shapeVis,uu.shape)
+        shapeVis=rescale*np.reshape(shapeVis,uu.shape)
         print 'done'
-        #print shapeVis
 
         #update visibilites
         #TODO: assuming fully linear polarization for the moment, so all the flux is going into the X receptor, this needs to be properly fixed
