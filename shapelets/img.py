@@ -46,57 +46,25 @@ def makeNoiseMap(shape,mean=0.,std=1.):
     """
     return np.random.normal(mean,std,shape)
 
-#TODO: auto noise estimation perhaps with edge detection and masking out regions? needs to be worked on, for know we assuma e a good noise region is known
+#TODO: auto noise estimation perhaps with edge detection and masking out regions? needs to be worked on, for know we assume a good noise region is known or just sample the entire image
 def estimateNoise(im,mode='basic'):
     """
     Estimate the Gaussian noise statistics for an image
     modes:
         basic: compute the mean and std from an input image
+        sample: randomly sample a fraction pixels, works fine for sparse images
     """
     if mode.startswith('basic'):
         mean=np.mean(im)
         std=np.std(im)
         print 'Estimated noise: \tmean: %f \tstd: %f'%(mean,std)
         return mean,std
-
-#def estimateNoiseMap(im,region=None,masks=None,sigma=3.,tol=.01,maxiter=None):
-#    """Generate a noise map based on background pixels by iteratively clipping noise above a set sigma level
-#    until the variation between iterations is within the tolerance or the maximum number of iterations is reached.
-#    If region is set then the noise is computed for a region and applied to the entire map.
-#    Masks can be included to ignore portions of the image."""
-#    im=np.ma.array(im)
-#    if region is None:
-#        if not (masks is None):
-#            for m in masks:
-#                im[m[0]:m[1],m[2]:m[3]]=np.ma.masked
-#        mean0=np.mean(im)
-#        median0=np.median(im)
-#        mode0=2.5*median0-1.5*mean0
-#        std0=np.std(im)
-#        conv=False
-#        niter=0
-#        if maxiter==0:conv=True #compute the noise on the unclipped image
-#        while not conv:
-#            print 'iteration:', niter
-#            im=np.ma.masked_greater(im,sigma*np.abs(mode0))
-#            im=np.ma.masked_less(im,-1*sigma*np.abs(mode0))
-#            if np.abs(np.std(im)-std0)/std0 < tol: conv=True
-#            elif np.ma.count_masked(im)>im.size*.5: conv=True
-#            else:
-#                std0=np.std(im)
-#                mode0=2.5*np.median(im)-1.5*np.mean(im)
-#            niter+=1
-#            if not(maxiter is None) and niter==maxiter: break
-#        #noisemap=np.ones((im.shape[0],im.shape[1]))*np.std(im)
-#        noisemap=np.random.normal(np.mean(im),np.std(im),(im.shape[0],im.shape[1]))
-#        return noisemap
-#    else:
-#        im_region=selPxRange(im,region)
-#        std0=np.std(im_region)
-#        mean0=np.mean(im_region)
-#        noisemap=np.ones_like(im)
-#        noisemap=np.random.normal(mean0,std0,(im.shape[0],im.shape[1]))
-#        return noisemap
+    if mode.startswith('sample'):
+        sample=np.random.choice(im.flatten(), size=int(im.size*0.1), replace=True) #randomly sample npix*f pixels
+        mean=np.mean(sample)
+        std=np.std(sample)
+        print 'Estimated noise: \tmean: %f \tstd: %f'%(mean,std)
+        return mean,std
 
 def constructModel(bvals,coeffs,size):
     """Construct a model image based on the basis functions values, and coeffs on an image
@@ -121,7 +89,6 @@ def polarCoeffImg(coeffs,nmax):
                 cnt+=1
     return im
 
-#TODO: this is wrong
 def xc2radec(xc,hdr,offset=[0.,0.]):
     """Return the RA,DEC position for a centroid (x,y) pair based on FITS header
     offset: x,y offset from full image
@@ -130,7 +97,6 @@ def xc2radec(xc,hdr,offset=[0.,0.]):
     dec=(hdr['decPix']-(offset[1]+xc[1]))*hdr['ddec']+hdr['dec']
     return ra,dec
 
-#TODO: this is wrong
 def beta2size(beta,hdr=None,dra=1.,ddec=1.):
     """Convert a beta pixel size to celestial size
     requires either FITS header (hdr) or the delta RA (dra) and delta DEC (ddec)

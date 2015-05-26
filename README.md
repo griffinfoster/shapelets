@@ -20,12 +20,12 @@ Based on the shapelet framework developed in [Shapelets: I. A Method for Image A
 * pyfits 
 * json
 * pywcs
+* pyrap 
 
 #### Recommended Python Modules
 ===
 
 * PIL 
-* pyrap 
 
 #### Install
 ===
@@ -52,6 +52,7 @@ The scripts directory contains a number scripts for plotting, decomposing, and f
 * plotCoeffs.py : given a shapelet coefficient file, plot the modelled source and coefficients
 * solveShapelet.py : given a set of parameters and an image, decompose the image into shapelet coefficients
 * fitShapelet.py : fit parameters to minimize the chi^2 difference between shapelet model and image
+* insertShapelet.py : insert a shapelet coefficient set into a Measurement Set
 
 #### Examples
 ===

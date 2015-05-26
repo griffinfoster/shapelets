@@ -49,14 +49,15 @@ if __name__ == '__main__':
 
     #noise map
     if opts.nregion is None:
-        #use the image region for noise estimation
-        mean,std=shapelets.img.estimateNoise(im,mode='basic')
+        #sample the entire image for noise estimation
+        mean,std=shapelets.img.estimateNoise(im0,mode='sample')
         nm=shapelets.img.makeNoiseMap(im.shape,mean,std)
     else:
         #use a specific region for noise estimation
         nextent=map(int, opts.nregion.split(','))
         mean,std=shapelets.img.estimateNoise(shapelets.img.selPxRange(im0,nextent),mode='basic')
         nm=shapelets.img.makeNoiseMap(im.shape,mean,std)
+    exit()
 
     #select initial beta, phi, and xc
     if opts.beta==None:
