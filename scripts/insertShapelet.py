@@ -65,9 +65,9 @@ if __name__ == '__main__':
     #generate basis functions
     print 'generating UV Basis Functions...',
     if d['mode'].startswith('herm'):
-        bfs=shapelets.decomp.genBasisFuncs([betaRad[0],betaRad[0]],d['norder'],phi,fourier=True)
+        bfs=shapelets.decomp.genBasisFuncs([betaRad[0],betaRad[1]],d['norder'],phi,fourier=True)
     elif d['mode'].startswith('lag'):
-        bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0],betaRad[0]],d['norder'],phi,fourier=True)
+        bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0],betaRad[1]],d['norder'],phi,fourier=True)
     print len(bfs), 'done'
 
     #parse where to insert the shapelet model
@@ -157,8 +157,7 @@ if __name__ == '__main__':
             #TODO: visibilites seem to be rotated by 90 degrees
             #TODO: i think this line is correct, but the rotation and mirroring leads me to use the line below -> shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,uu.flatten(),vv.flatten())
             #TODO: this could be at least partially due to the sign of the FITS ddec and dra
-            #shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),uu.flatten())
-            shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),-1.*uu.flatten())
+            shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,-1.*vv.flatten(),-1.*uu.flatten())
         #shapeVis+=1.*shapelets.shapelet.computeBasis2d(bfs[1],uu.flatten(),vv.flatten())
         shapeVis=rescale*np.reshape(shapeVis,uu.shape)
         print 'done'
