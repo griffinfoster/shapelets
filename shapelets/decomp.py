@@ -8,25 +8,6 @@ import numpy as np
 import shapelet,img
 from scipy import optimize
 
-#TODO; a better initBeta function
-#def initBeta(im,frac=.25,nmax=5):
-#    """Initial starting point for Beta, uses size of image to set limits, initial beta is set to the min beta
-#    frac: fraction of a pixel to use as the minimum size
-#    nmax: maximum decomposition order
-#    beta_max = theta_max / (nmax+1)**.5
-#    beta_min = theta_min * (nmax+1)**.5
-#    """
-#    beta_max=max(im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5))
-#    #print im.shape[0]/((nmax+1.)**.5),im.shape[1]/((nmax+1.)**.5)
-#    beta0=min(frac*((nmax+1.)**.5),beta_max)
-#    return [beta0,beta0]
-#
-#def initBeta(im,frac=.2):
-#    """Initial starting point for Beta, uses size of image
-#    frac: fraction of image to use as the initial beta
-#    """
-#    return [frac*im.shape[0],frac*im.shape[1]]
-
 def ellipticalGaussian2D(x0=0.,y0=0.,sigmax=1.,sigmay=1.,phi=0.,amp=1.,offset=0.):
     """A generalized 2D ellipitical Gaussian function with centre (x0,y0), width (sigmax,sigmay), amplitude amp, offset, and rotation angle phi
     """
@@ -36,14 +17,15 @@ def ellipticalGaussian2D(x0=0.,y0=0.,sigmax=1.,sigmay=1.,phi=0.,amp=1.,offset=0.
     return lambda x,y: amp * np.exp( -1.*( aa*((x-x0)**2.) + 2.*bb*(x-x0)*(y-y0) + cc*((y-y0)**2.) ) ) + offset
 
 def initGaussian(im):
-    """Returns (x, y, sigmax, sigmay, phi, amp, offset)
+    """Returns (y, x, sigmay, sigmax, phi, amp, offset)
     the gaussian parameters of a 2D distribution by calculating its
     moments
     borrowed from: http://wiki.scipy.org/Cookbook/FittingData"""
     total = im.sum()
     X, Y = np.indices(im.shape)
-    x = (X*im).sum()/total
-    y = (Y*im).sum()/total
+    #y = (Y*im).sum()/total
+    #x = (X*im).sum()/total
+    y,x=img.maxPos(im)
     col = im[:, int(y)]
     sigmax = np.sqrt(abs((np.arange(col.size)-y)**2*col).sum()/np.abs(col).sum())
     row = im[int(x), :]
@@ -84,13 +66,15 @@ def initParams(im,mode='basic',frac=.2,hdr=None):
         dra=np.pi*hdr['dra']/180.
         ddec=np.pi*hdr['ddec']/180.
         rotM=np.matrix([[np.cos(bpa),-1.*np.sin(bpa)],[np.sin(bpa),np.cos(bpa)]])
-        rotDeltas=np.dot(rotM,np.array([dra,ddec])) #rotate delta RA and delta Dec
+
+        temp0=np.dot(rotM,np.array([(np.pi/180.)*hdr['dra'],0.]))
+        temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*hdr['ddec']]))
+        rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
         psfPix=(np.array([bmaj,bmin])/rotDeltas)/2.3548 #go from FWHM to sigma, it is better to error on the side of higher order structure, then to miss it
         Theta_min=np.abs(np.array(psfPix).flatten())
-
+        
         beta=np.sqrt(Theta_max*Theta_min)
         phi=p[4]
-        print [(Theta_max[0]/Theta_min[0])-1,(Theta_max[1]/Theta_min[1])-1]
         nmax=[int((Theta_max[0]/Theta_min[0])+1),int((Theta_max[1]/Theta_min[1])+1)]
         return beta, phi, nmax
 
@@ -158,26 +142,26 @@ def genBasisFuncs(beta,nmax,phi,fourier=False):
     """
     bfs=[]
     if type(nmax) is int: nmax=[nmax,nmax]
-    for x in range(nmax[0]):
-        for y in range(nmax[1]):
-            bfs.append(shapelet.dimBasis2d(x,y,beta=beta,phi=phi,fourier=fourier))
+    for ny in range(nmax[0]):
+        for nx in range(nmax[1]):
+            bfs.append(shapelet.dimBasis2d(ny,nx,beta=beta,phi=phi,fourier=fourier))
     return bfs
 
-def genBasisMatrix(beta,nmax,phi,rx,ry,fourier=False):
+def genBasisMatrix(beta,nmax,phi,yy,xx,fourier=False):
     """Generate the n x k matrix of basis functions(k) for each pixel(n)
     nmax: maximum decompisition order
     beta: characteristic size of the shapelet
     phi: rotation angle
-    rx: range of x values to evaluate basis functions
-    ry: range of y values to evaluate basis functions
+    yy: y values to evaluate basis functions
+    xx: x values to evaluate basis functions
     fourier: return a FOurer transformed version of the basis functions
     """
     bvals=[]
     if type(nmax) is int: nmax=[nmax,nmax]
-    for x in range(nmax[0]):
-        for y in range(nmax[1]):
-            bf=shapelet.dimBasis2d(x,y,beta=beta,phi=phi,fourier=fourier)
-            bvals.append(shapelet.computeBasis2d(bf,rx,ry).flatten())
+    for ny in range(nmax[0]):
+        for nx in range(nmax[1]):
+            bf=shapelet.dimBasis2d(ny,nx,beta=beta,phi=phi,fourier=fourier)
+            bvals.append(shapelet.computeBasis2d(bf,yy,xx).flatten())
     bm=np.array(bvals)
     return bm.transpose()
 
@@ -197,14 +181,14 @@ def solveCoeffs(m,im):
     theta_hat=np.dot(mTm_inv_mT,im_flat) #compute the coefficents for the basis functions
     return theta_hat
 
-def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],r=None,th=None):
+def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],r=None,th=None):
     """Function which is to be minimized in the chi^2 analysis for Polar shapelets
     params = [beta0, beta1, phi, xc, yc] or some subset
         beta0: characteristic size of shapelets, fit parameter
         beta1: characteristic size of shapelets, fit parameter
         phi: rotation angle of shapelets, fit parameter
-        xc: x centroid of shapelets, fit parameter
         yc: y centroid of shapelets, fit parameter
+        xc: x centroid of shapelets, fit parameter
     nmax: number of coefficents to use in the Laguerre polynomials
     im: observed image
     nm: noise map
@@ -217,8 +201,8 @@ def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_
     beta0=set_beta[0]
     beta1=set_beta[1]
     phi=set_phi
-    xc=set_xc[0]
-    yc=set_xc[1]
+    yc=set_xc[0]
+    xc=set_xc[1]
     fitParams={'beta':False,'phi':False,'xc':False}
     for pid,paramName in enumerate(order):
         if paramName=='beta0':
@@ -247,7 +231,7 @@ def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_
 
     size=im.shape
     if fitParams['xc'] or r is None:
-        r,th=shapelet.polarArray([xc,yc],size) #the redius,theta pairs need to updated if fitting for the xc centre or if not using the r,th inputs
+        r,th=shapelet.polarArray([yc,xc],size) #the radius,theta pairs need to updated if fitting for the xc centre or if not using the r,th inputs
     bvals=genPolarBasisMatrix([beta0,beta1],nmax,phi,r,th)
     coeffs=solveCoeffs(bvals,im)
     mdl=np.abs(img.constructModel(bvals,coeffs,size))
@@ -273,35 +257,35 @@ def chi2nmaxPolarFunc(params,im,nm,beta0,beta1,phi,xc):
     mdl=np.abs(img.constructModel(bvals,coeffs,size))
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
-def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],xx=None,yy=None):
+def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_beta=[None,None],set_phi=None,set_xc=[None,None],xx=None,yy=None):
     """Function which is to be minimized in the chi^2 analysis for Cartesian shapelets
     params = [beta0, beta1, phi, xc, yc] or some subset
         beta0: characteristic size of shapelets, fit parameter
         beta1: characteristic size of shapelets, fit parameter
         phi: rotation angle of shapelets, fit parameter
-        xc: x centroid of shapelets, fit parameter
         yc: y centroid of shapelets, fit parameter
+        xc: x centroid of shapelets, fit parameter
     nmax: number of coefficents to use in the Hermite polynomials
     im: observed image
     nm: noise map
     order: order of parameters
     fixed parameters: set_beta, set_phi, set_xc
-    xx: X postiion grid, array of im.shape, not required if xc and yc being fit
+    xx: X position grid, array of im.shape, not required if xc and yc being fit
     yy: Y position grid, array of im.shape, not required if xc and yc being fit
     """
     #determine which parameters are being fit for, and which are not
-    betaX=set_beta[0]
-    betaY=set_beta[1]
+    betaY=set_beta[0]
+    betaX=set_beta[1]
     phi=set_phi
-    xc=set_xc[0]
-    yc=set_xc[1]
+    yc=set_xc[0]
+    xc=set_xc[1]
     fitParams={'beta':False,'phi':False,'xc':False}
     for pid,paramName in enumerate(order):
         if paramName=='beta0':
-            betaX=params[pid]
+            betaY=params[pid]
             fitParams['beta']=True
         elif paramName=='beta1':
-            betaY=params[pid]
+            betaX=params[pid]
             fitParams['beta']=True
         elif paramName=='phi':
             phi=params[pid]
@@ -324,33 +308,33 @@ def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','xc','yc'],set_beta=
     size=im.shape
     if fitParams['xc'] or xx is None:
         #shift the (0,0) point to the centroid
-        rx=np.array(range(0,size[0]),dtype=float)-xc
-        ry=np.array(range(0,size[1]),dtype=float)-yc
-        xx,yy=shapelet.xy2Grid(rx,ry)
-    bvals=genBasisMatrix([betaX,betaY],nmax,phi,xx,yy)
+        ry=np.array(range(0,size[0]),dtype=float)-yc
+        rx=np.array(range(0,size[1]),dtype=float)-xc
+        yy,xx=shapelet.xy2Grid(ry,rx)
+    bvals=genBasisMatrix([betaY,betaX],nmax,phi,yy,xx)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])
 
-def chi2nmaxFunc(params,im,nm,beta0,beta1,phi,xc):
+def chi2nmaxFunc(params,im,nm,betaY,betaX,phi,xc):
     """
     params = [nmaxX,nmaxY]
         nmax: number of coefficents to use in x,y
     im: observed image
     nm: noise map
-    beta0: characteristic size of shapelet
-    beta1: characteristic size of shapelet
+    betaY: characteristic size of shapelet
+    betaX: characteristic size of shapelet
     phi: rotation angle of shapelets
     xc: fit centroid position
     """
     nmax=params
     size=im.shape
     #shift the (0,0) point to the centroid
-    rx=np.array(range(0,size[0]),dtype=float)-xc[0]
-    ry=np.array(range(0,size[1]),dtype=float)-xc[1]
-    xx,yy=shapelet.xy2Grid(rx,ry)
+    ry=np.array(range(0,size[0]),dtype=float)-xc[0]
+    rx=np.array(range(0,size[1]),dtype=float)-xc[1]
+    yy,xx=shapelet.xy2Grid(ry,rx)
 
-    bvals=genBasisMatrix([beta0,beta1],[nmax,nmax],phi,xx,yy)
+    bvals=genBasisMatrix([betaY,betaX],[nmax,nmax],phi,yy,xx)
     coeffs=solveCoeffs(bvals,im)
     mdl=img.constructModel(bvals,coeffs,size)
     return np.sum((im-mdl)**2 / nm**2)/(size[0]*size[1])

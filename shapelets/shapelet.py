@@ -37,7 +37,7 @@ def basis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     """
     b=hermite2d(n0,n1)
     m=rotMatrix(phi)
-    phs=1.
+    phs=[1.,1.]
     if fourier:
         beta=[1./beta[0],1./beta[1]]
         phs=[1j**(n0),1j**(n1)]
@@ -46,7 +46,7 @@ def basis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     b[1]*=((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5)*phs[1]
     exp1=lambda x: beta[1] * b[1](x) * np.exp(-.5*(x**2))
 
-    return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
+    return lambda y,x: exp0(m[0,0]*y+m[0,1]*x)*exp1(m[1,0]*y+m[1,1]*x)
 
 def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     """2d dimensional Cartesian basis function of characteristic size beta
@@ -55,7 +55,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     """
     b=hermite2d(n0,n1)
     m=rotMatrix(phi)
-    phs=1.
+    phs=[1.,1.]
     if fourier:
         beta=[1./beta[0],1./beta[1]]
         phs=[1j**(n0),1j**(n1)]
@@ -64,7 +64,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     b[1]*=(beta[1]**(-.5))*(((2**n1)*(np.pi**(.5))*factorial(n1))**(-.5))*phs[1]
     exp1=lambda x: b[1](x/beta[1]) * np.exp(-.5*((x/beta[1])**2))
     
-    return lambda x,y: exp0(m[0,0]*x+m[0,1]*y)*exp1(m[1,0]*x+m[1,1]*y)
+    return lambda y,x: exp0(m[0,0]*y+m[0,1]*x)*exp1(m[1,0]*y+m[1,1]*x)
 
 #TODO: make into an elliptical form?
 def polarDimBasis(n0,m0,beta=1.,phi=0.,fourier=False):
@@ -86,46 +86,46 @@ def polarArray(xc,size,rot=0.):
     """Return arrays of shape 'size' with radius and theta values centered on xc
     rot: radians in which to rotate the shapelet
     """
-    rx=np.array(range(0,size[1]),dtype=float)-xc[0]
-    ry=np.array(range(0,size[0]),dtype=float)-xc[1]
-    rx=np.reshape(np.tile(rx,size[0]),(size[0],size[1]))
-    ry=np.reshape(np.tile(ry,size[1]),(size[1],size[0]))
-    rExp = lambda x,y: np.sqrt(np.square(x) + np.square(y))
-    thExp = lambda x,y: np.arctan2(y,x)+rot
-    return rExp(rx,ry.T), thExp(rx,ry.T)
+    ry=np.array(range(0,size[0]),dtype=float)-xc[0]
+    rx=np.array(range(0,size[1]),dtype=float)-xc[1]
+    yy=np.reshape(np.tile(rx,size[0]),(size[0],size[1]))
+    xx=np.reshape(np.tile(ry,size[1]),(size[1],size[0]))
+    rExp = lambda y,x: np.sqrt(np.square(y) + np.square(x))
+    thExp = lambda y,x: np.arctan2(y,x)+rot
+    return rExp(yy,xx.T), thExp(yy,xx.T)
 
 def cartArray(xc,size):
-    """Return arrays of shape 'size' with x,y values centered on xc
+    """Return arrays of shape 'size' with y,x values centered on xc
     """
-    rx=np.array(range(0,size[1]),dtype=float)-xc[0]
-    ry=np.array(range(0,size[0]),dtype=float)-xc[1]
-    rx=np.reshape(np.tile(rx,size[0]),(size[0],size[1]))
-    ry=np.reshape(np.tile(ry,size[1]),(size[1],size[0]))
-    return rx.T,ry
+    ry=np.array(range(0,size[0]),dtype=float)-xc[0]
+    rx=np.array(range(0,size[1]),dtype=float)-xc[1]
+    yy=np.reshape(np.tile(ry,size[1]),(size[0],size[1]))
+    xx=np.reshape(np.tile(rx,size[0]),(size[1],size[0]))
+    return yy.T,xx
 
-def xy2Grid(rx,ry):
+def xy2Grid(ry,rx):
     """Convert a range of x and y to a grid of shape (len(x),len(y))"""
-    rx0=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
-    ry0=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
-    return rx0.T,ry0
+    yy=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
+    xx=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
+    return yy.T,xx
 
-def xy2rthGrid(rx,ry):
-    """Convert a range of x and y to r,th arrays of shape (len(x),len(y))"""
-    rx0=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
-    ry0=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
-    rExp = lambda x,y: np.sqrt(np.square(x) + np.square(y))
-    thExp = lambda x,y: np.arctan2(y,x)
-    return rExp(rx0,ry0.T), thExp(rx0,ry0.T)
+def xy2rthGrid(ry,rx):
+    """Convert a range of y and x to r,th arrays of shape (len(y),len(x))"""
+    yy=np.reshape(np.tile(ry,len(rx)),(len(rx),len(ry)))
+    xx=np.reshape(np.tile(rx,len(ry)),(len(ry),len(rx)))
+    rExp = lambda y,x: np.sqrt(np.square(y) + np.square(x))
+    thExp = lambda y,x: np.arctan2(y,x)
+    return rExp(yy,xx.T), thExp(yy,xx.T)
 
 def rth2xy(r,th):
-    """Convert r,theta array pair to an x,y pair"""
-    x=r*np.cos(th)
-    y=r*np.sin(th)
-    return x,y
+    """Convert r,theta array pair to an y,x pair"""
+    y=r*np.cos(th)
+    x=r*np.sin(th)
+    return y,x
 
-def xyRotate(rx,ry,rot=0.):
-    """Apply a rotation(radians) to an set of X,Y coordinates"""
-    r0,th0=xy2rthGrid(rx,ry)
+def xyRotate(ry,rx,rot=0.):
+    """Apply a rotation(radians) to an set of Y,Y coordinates"""
+    r0,th0=xy2rthGrid(ry,rx)
     th0+=rot
     return rth2xy(r0,th0)
 
@@ -137,13 +137,13 @@ def computeBasisPolarAtom(b,r,th):
     """Compute the polar basis function b in the position (rad,theta)"""
     return b(r,th)
 
-def computeBasis2d(b,rx,ry):
-    """Compute the values of a 2D Basis function b in range (rx,ry)"""
-    return b(rx,ry)
+def computeBasis2d(b,yy,xx):
+    """Compute the values of a 2D Basis function b for (yy,xx)"""
+    return b(yy,xx)
 
-def computeBasis2dAtom(b,x,y):
-    """Compute the basis function b in the position (x,y), x and y can be arrays"""
-    return b(rx,ry)
+def computeBasis2dAtom(b,y,x):
+    """Compute the basis function b in the position (y,x), x and y can be arrays"""
+    return b(y,x)
 
 if __name__ == "__main__":
 

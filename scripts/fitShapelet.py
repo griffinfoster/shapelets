@@ -61,7 +61,7 @@ if __name__ == '__main__':
     extent=[0,im0.shape[0],0,im0.shape[1]]
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
-        im=shapelets.img.selPxRange(im0,extent)
+        im=shapelets.img.selPxRange(im0,[extent[2],extent[3],extent[0],extent[1]])
     else:
         im=im
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     else:
         #use a specific region for noise estimation
         nextent=map(int, opts.nregion.split(','))
-        mean,std=shapelets.img.estimateNoise(shapelets.img.selPxRange(im0,nextent),mode='basic')
+        mean,std=shapelets.img.estimateNoise(shapelets.img.selPxRange(im0,[nextent[2],nextent[3],nextent[0],nextent[1]]),mode='basic')
         nm=shapelets.img.makeNoiseMap(im.shape,mean,std)
 
     #determine set parameters
@@ -89,7 +89,7 @@ if __name__ == '__main__':
         if len(beta0)==1:
             beta0=[beta0[0],beta0[0]]
         else:
-            beta0=[beta0[0],beta0[1]]
+            beta0=[beta0[1],beta0[0]] #input to numpy flip
 
     if opts.init_phi==None:
         betaTemp,phi0,nmax0=shapelets.decomp.initParams(im,mode='fit',hdr=hdr)
@@ -100,17 +100,15 @@ if __name__ == '__main__':
         xc=shapelets.img.centroid(im)
     else:
         xc=map(float,opts.init_xc.split(','))
-        #correct for position if using only a region of the image
-        #xc[0]-=extent[0]
-        #xc[1]-=extent[2]
+        xc=[xc[1],xc[0]] #input to numpy flip
 
     nmax=opts.nmax.split(',')
     if len(nmax)==1:
         nmax=[int(nmax[0])+1,int(nmax[0])+1]
     else:
-        nmax=[int(nmax[0])+1,int(nmax[1])+1]
+        nmax=[int(nmax[1])+1,int(nmax[0])+1] #input to numpy flip
 
-    print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[0],beta0[1],phi0,xc[0],xc[1],nmax[0]-1,nmax[1]-1)
+    print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[1],beta0[0],phi0,xc[1],xc[0],nmax[1]-1,nmax[0]-1)
     print 'Fitting xc : %r\nFitting beta : %r\nFitting phi : %r'%(not(set_xc),not(set_beta),not(set_phi))
 
     if opts.mode.startswith('pol'):
@@ -151,14 +149,14 @@ if __name__ == '__main__':
             if set_beta:
                 if set_phi:
                     print 'Running minimization for centroid only...'
-                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[xc[0],xc[1]],args=(nmax,im,nm,['xc','yc'],beta0,phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[xc[0],xc[1]],args=(nmax,im,nm,['yc','xc'],beta0,phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=beta0
                     phi1=phi0
                     xc1=[res['x'][0],res['x'][1]]
                 else:
                     print 'Running minimization for phi and centroid...'
-                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[phi0,xc[0],xc[1]],args=(nmax,im,nm,['phi','xc','yc'],beta0,None,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[phi0,xc[0],xc[1]],args=(nmax,im,nm,['phi','yc','xc'],beta0,None,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=beta0
                     phi1=res['x'][0]
@@ -166,7 +164,7 @@ if __name__ == '__main__':
             else:
                 if set_phi:
                     print 'Running minimization for beta and centroid...'
-                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[beta0[0],beta0[1],xc[0],xc[1]],args=(nmax,im,nm,['beta0','beta1','xc','yc'],[None,None],phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2PolarFunc,[beta0[0],beta0[1],xc[0],xc[1]],args=(nmax,im,nm,['beta0','beta1','yc','xc'],[None,None],phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=[res['x'][0],res['x'][1]]
                     phi1=phi0
@@ -186,23 +184,23 @@ if __name__ == '__main__':
         print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
         nmax1=optimize.brute(shapelets.decomp.chi2nmaxPolarFunc,[np.s_[n0:n1:1]],args=(im,nm,beta1[0],beta1[1],phi1,xc1),finish=None)
         nmax1=[int(nmax1),int(nmax1)]
-        print 'Using %i x %i coefficients'%(nmax1[0],nmax1[1])
+        print 'Using %i x %i coefficients'%(nmax1[1],nmax1[0])
         print '\tDone'
 
         print 'Solution:'
-        print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f,%f) pixels \t ncoeffs: %i x %i'%(beta1[0], beta1[1], phi1, xc1[0], xc1[1], nmax1[0],nmax1[1])
+        print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f, %f) (sub image: %f,%f) pixels \t ncoeffs: %i x %i'%(beta1[1], beta1[0], phi1, xc1[1]+extent[2], xc1[0]+extent[0], xc1[1], xc1[0], nmax1[1],nmax1[0])
 
         #plot: data, model, residual: model-data, coeffs
         fig = plt.figure()
         ax = fig.add_subplot(221)
         plt.title('Image')
         plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=xc,width=2.*np.max(beta0),height=2.*np.min(beta0),angle=(180.*phi0/np.pi))
+        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.3)
         e.set_facecolor('black')
         ax.add_artist(e)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
         plt.colorbar()
         
         plt.subplot(222)
@@ -234,15 +232,18 @@ if __name__ == '__main__':
             radec=hdr['wcs'].wcs_pix2sky(np.array([xc1]),1)[0] #unit: degrees
         else:
             radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
+            #radec=hdr['wcs'].wcs_pix2sky(np.array([[extent[1]-xc1[0],extent[3]-xc1[1]]]),1)[0] #unit: degrees
+
+        print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
         ofn=opts.ofn
         print 'Writing to file:',ofn
         shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
-    else:
-        rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
-        xx0,yy0=shapelets.shapelet.xy2Grid(rx,ry)
+    elif opts.mode.startswith('cart'):
+        ry=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+        rx=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+        xx0,yy0=shapelets.shapelet.xy2Grid(ry,rx)
 
         #scipy-based minimizer
         if set_xc:
@@ -279,14 +280,14 @@ if __name__ == '__main__':
             if set_beta:
                 if set_phi:
                     print 'Running minimization for centroid only...'
-                    res=optimize.minimize(shapelets.decomp.chi2Func,[xc[0],xc[1]],args=(nmax,im,nm,['xc','yc'],beta0,phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[xc[0],xc[1]],args=(nmax,im,nm,['yc','xc'],beta0,phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=beta0
                     phi1=phi0
                     xc1=[res['x'][0],res['x'][1]]
                 else:
                     print 'Running minimization for phi and centroid...'
-                    res=optimize.minimize(shapelets.decomp.chi2Func,[phi0,xc[0],xc[1]],args=(nmax,im,nm,['phi','xc','yc'],beta0,None,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[phi0,xc[0],xc[1]],args=(nmax,im,nm,['phi','yc','xc'],beta0,None,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=beta0
                     phi1=res['x'][0]
@@ -294,7 +295,7 @@ if __name__ == '__main__':
             else:
                 if set_phi:
                     print 'Running minimization for beta and centroid...'
-                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0],beta0[1],xc[0],xc[1]],args=(nmax,im,nm,['beta0','beta1','xc','yc'],[None,None],phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
+                    res=optimize.minimize(shapelets.decomp.chi2Func,[beta0[0],beta0[1],xc[0],xc[1]],args=(nmax,im,nm,['beta0','beta1','yc','xc'],[None,None],phi0,[None,None],None,None),method=opts.fitterMethod,options={'xtol':opts.xtol,'ftol':opts.ftol,'maxiter':opts.maxiter})
                     print res
                     beta1=[res['x'][0],res['x'][1]]
                     phi1=phi0
@@ -314,35 +315,35 @@ if __name__ == '__main__':
         print 'Running brute force for size of N on range [%i:%i]...'%(n0,n1-1)
         nmax1=optimize.brute(shapelets.decomp.chi2nmaxFunc,[np.s_[n0:n1:1]],args=(im,nm,beta1[0],beta1[1],phi1,xc1),finish=None)
         nmax1=[int(nmax1),int(nmax1)]
-        print 'Using %i x %i coefficients'%(nmax1[0],nmax1[1])
+        print 'Using %i x %i coefficients'%(nmax1[1],nmax1[0])
         print '\tDone'
 
         print 'Solution:'
-        print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f,%f) pixels \t ncoeffs: %i x %i'%(beta1[0], beta1[1], phi1, xc1[0], xc1[1], nmax1[0],nmax1[1])
+        print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f, %f) (sub image: %f,%f) pixels \t ncoeffs: %i x %i'%(beta1[1], beta1[0], phi1, xc1[1]+extent[2], xc1[0]+extent[0], xc1[1], xc1[0], nmax1[1],nmax1[0])
 
         #plot: data, model, residual: model-data, coeffs
         fig = plt.figure()
         ax = fig.add_subplot(221)
         plt.title('Image')
         plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=xc,width=2.*np.max(beta0),height=2.*np.min(beta0),angle=(180.*phi0/np.pi))
+        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.3)
         e.set_facecolor('black')
         ax.add_artist(e)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
         plt.colorbar()
         
         plt.subplot(222)
         plt.title('Model')
-        rx=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
-        ry=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
-        xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,xx,yy)
+        ry=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
+        rx=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
+        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+        bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,yy,xx)
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
         plt.imshow(mdl)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc1[1],xc1[0],'+',horizontalalignment='center',verticalalignment='center')
         plt.colorbar()
         
         plt.subplot(223)
@@ -363,6 +364,8 @@ if __name__ == '__main__':
         else:
             radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
 
+        print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
+
         ofn=opts.ofn
         print 'Writing to file:',ofn
         shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
@@ -370,3 +373,4 @@ if __name__ == '__main__':
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)
     else: plt.show()
+

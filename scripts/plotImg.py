@@ -32,7 +32,7 @@ if __name__ == '__main__':
         im=shapelets.fileio.readImg(fn)
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
-        im=shapelets.img.selPxRange(im,extent)
+        im=shapelets.img.selPxRange(im,[extent[2],extent[3],extent[0],extent[1]]) #numpy axis flip
     
     fig = plt.figure()
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
@@ -41,6 +41,8 @@ if __name__ == '__main__':
     plt.title('Image')
     plt.imshow(im)
     plt.colorbar()
+    plt.xlabel('X/RA')
+    plt.ylabel('Y/Dec')
     print '=================================='
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)

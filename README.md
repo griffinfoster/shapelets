@@ -60,11 +60,16 @@ The scripts directory contains a number scripts for plotting, decomposing, and f
 ```
 plotShapelets.py -n 4 -p -b 1.0,1.0,0.44
 
-solveShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 20 -m polar
-solveShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 20 -b 3.,3. -p 0.448266
+plotImg.py -r 1010,1117,947,1030 ../data/N6251_test.fits
+plotImg.py ../data/zen.2455819.69771.uvcRREM_briggs-dirty.fits
 
-fitShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 8 -m polar -p 0.486636 -b 4.,4. --set_phi --set_xc
-fitShapelet.py ../data/N6251_test.fits -r 1028,1097,1025,1074 -N 967,1067,972,1026 -n 8 -p 0.486636 -b 4.,4. --set_phi --set_xc
+solveShapelet.py -r 1010,1117,947,1030 -N 891,1257,600,840 ../data/N6251_test.fits -n 15 -x 49,52 --beta=6.,2.5 --phi=-0.448243 -m cart
+solveShapelet.py -r 489,530,489,527 -N 436,561,405,487 ../data/zen.2455819.69771.uvcRREM_briggs-dirty.fits -n 10 -m cart
+
+fitShapelet.py -r 1010,1117,947,1030 -N 891,1257,600,840 ../../data/N6251_test.fits -n 8 -x 49,52 --init_beta=6.,2.5 --init_phi=-0.448243 -m cart
+fitShapelet.py -r 489,530,489,527 -N 436,561,405,487 ../../data/zen.2455819.69771.uvcRREM_briggs-dirty.fits -n 8 -x 20.,22. --init_beta=2.788068,2.336974 --init_phi=-1.046530 -m cart -B 10
+
+plotCoeffs.py ../data/solve/N6251_cart.pkl
 
 ```
 

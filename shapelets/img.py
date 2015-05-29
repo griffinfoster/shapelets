@@ -8,8 +8,10 @@ import numpy as np
 import decomp
 
 def selPxRange(im,extent):
-    """Select out the subimage within the extent region (xmin,xmax,ymin,ymax)"""
-    return im[extent[2]:extent[3],extent[0]:extent[1]]
+    """Select out the subimage within the extent region (xmin,xmax,ymin,ymax)
+    Note about x,y def'n: in numpy the top left corner is (0,0) and the first index index increases from top to bottom, the second index increases from left to right, so this is a -90 degree rotation to the normal x-y plane
+    """
+    return im[extent[0]:extent[1],extent[2]:extent[3]]
 
 def flux(im):
     """Total flux of the image (M00)"""
@@ -21,14 +23,10 @@ def centroid(im,region=None):
         im=im[region[0]:region[1],region[2]:region[3]]
         offset=[region[0],region[2]]
     else: offset=[0,0]
-    #shift minimum to zero
-    im=im-im.min()
-    m00 = im.sum()
-    m10=np.multiply(np.arange(im.shape[1]),im)
-    m01=np.multiply(np.arange(im.shape[0]),np.rot90(im))
-    m10=m10.sum()
-    m01=m01.sum()
-    return [m10/m00+offset[0], m01/m00+offset[1]]
+    m00=np.sum(im)
+    m01=np.sum(np.sum(im,axis=1)*np.arange(im.shape[0]))
+    m10=np.sum(np.sum(im,axis=0)*np.arange(im.shape[1]))
+    return [m01/m00+offset[0], m10/m00+offset[1]]
 
 def maxPos(im, region=None):
     """Return the position of the maximum in the image, region: use this region to determine the maximum"""
@@ -39,7 +37,7 @@ def maxPos(im, region=None):
     #shift minimum to zero
     im=im-im.min()
     maxpos=np.argwhere(im==np.max(im))[0]
-    return [maxpos[0]+offset[0]-1,maxpos[1]+offset[1]+1]
+    return [maxpos[0]+offset[0],maxpos[1]+offset[1]]
 
 def makeNoiseMap(shape,mean=0.,std=1.):
     """Return a noise map with a given shape, mean and std of Gaussian noise
@@ -70,6 +68,7 @@ def constructModel(bvals,coeffs,size):
     """Construct a model image based on the basis functions values, and coeffs on an image
     with size dimensions
     """
+    #return np.reshape(bvals[:,0],size)
     model_img=np.dot(bvals,coeffs)
     model_img=np.reshape(model_img,size)
     return model_img
@@ -92,9 +91,10 @@ def polarCoeffImg(coeffs,nmax):
 def xc2radec(xc,hdr,offset=[0.,0.]):
     """Return the RA,DEC position for a centroid (x,y) pair based on FITS header
     offset: x,y offset from full image
+    Notation note: dec is top/bottom direction, ra is left/right direction
     """
-    ra=(hdr['raPix']-(offset[0]+xc[0]))*hdr['dra']+hdr['ra']
-    dec=(hdr['decPix']-(offset[1]+xc[1]))*hdr['ddec']+hdr['dec']
+    ra=(hdr['raPix']-(offset[1]+xc[1]))*hdr['dra']+hdr['ra']
+    dec=(hdr['decPix']-(offset[0]+xc[0]))*hdr['ddec']+hdr['dec']
     return ra,dec
 
 def beta2size(beta,hdr=None,dra=1.,ddec=1.):
@@ -103,9 +103,9 @@ def beta2size(beta,hdr=None,dra=1.,ddec=1.):
     """
     if type(beta)==list:
         if hdr is None:
-            return [np.abs(beta[0]*dra),np.abs(beta[1]*ddec)]
+            return [np.abs(beta[1]*dra),np.abs(beta[0]*ddec)]
         else:
-            return [np.abs(beta[0]*hdr['dra']),np.abs(beta[1]*hdr['ddec'])]
+            return [np.abs(beta[1]*hdr['dra']),np.abs(beta[0]*hdr['ddec'])]
     else:
         if hdr is None:
             return [np.abs(beta*dra),np.abs(beta*ddec)]

@@ -16,14 +16,19 @@ try:
 except ImportError: pass
 
 def readFITS(fn,hdr=False):
-    """Read a FITS image file and returns a numpy array
+    """Read a FITS image file and returns a numpy array (only Stokes I or the first Stokes index)
     """
     hdulist=pf.open(fn)
     im=hdulist[0].data
-    #image data format: [frequency, polarization, x, y]
+    #image data format: [frequency, polarization, dec, ra]
     hdulist.close()
-    if hdr: return im[0,0],getFITSInfo(fn)
-    else: return im[0,0]
+    h=getFITSInfo(fn)
+    im=im[0,0]
+    #orient the image to the same way it would look in a normal FITS viewer
+    if h['dra'] > 0: im=np.fliplr(im)
+    if h['ddec'] > 0: im=np.flipud(im)
+    if hdr: return im,h
+    else: return im
 
 def getFITSInfo(fn):
     """Parse the FITS header for pointing and pixel size information
@@ -104,7 +109,7 @@ def writeHermiteCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode=
         'ra':pos[0],
         'dec':pos[1],
         'dra':pos[2],
-        'ddec':pos[2],
+        'ddec':pos[3],
         'info': info }
     if fmt.startswith('pkl'):
         fh=open(fn,'wb')
@@ -162,7 +167,7 @@ def writeLageurreCoeffs(fn,coeffs,xc,size,beta,phi,norder,pos=[0.,0.,0.,0.],mode
         'ra':pos[0],
         'dec':pos[1],
         'dra':pos[2],
-        'ddec':pos[2],
+        'ddec':pos[3],
         'info': info }
     if fmt.startswith('pkl'):
         d['coeffs']=coeffs

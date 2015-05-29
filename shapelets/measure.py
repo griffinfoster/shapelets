@@ -3,6 +3,8 @@ Measurement operations
 """
 
 #TODO: shear estimator
+#TODO: convert beta to angle on the sky, currently they are in pixels
+#TODO: R**2 returns negative values
 import numpy as np
 import scipy.special
 
@@ -10,7 +12,7 @@ def polarIDs(nmax):
     """Given an nmax, convert to (n.m) polar ID pairs
     """
     ids=[]
-    for nn in range(nmax):
+    for nn in range(nmax[0]):
         for mm in np.arange(-1*nn,nn+1):
             if nn%2==0 and mm%2==0:
                 ids.append([nn,mm])
@@ -23,9 +25,9 @@ def cartIDs(nmax):
     """
     ids=[]
     if type(nmax) is int: nmax=[nmax,nmax]
-    for n1 in range(nmax[0]):
-        for n2 in range(nmax[1]):
-            ids.append([n1,n2])
+    for ny in range(nmax[0]):
+        for nx in range(nmax[1]):
+            ids.append([ny,nx])
     return ids
 
 def flux(coeffs,beta,nmax,mode):
@@ -38,10 +40,10 @@ def flux(coeffs,beta,nmax,mode):
     if mode.startswith('hermite'):
         c0=np.reshape(coeffs,nmax)
         flux=0
-        for n1 in range(nmax[0]):
-            for n2 in range(nmax[1]):
-                if n1%2==0 and n2%2==0:
-                    flux+=(2.**(.5*(2-n1-n2)))*np.sqrt(scipy.special.binom(n1,n1/2))*np.sqrt(scipy.special.binom(n2,n2/2))*c0[n1,n2]
+        for ny in range(nmax[0]):
+            for nx in range(nmax[1]):
+                if ny%2==0 and nx%2==0:
+                    flux+=(2.**(.5*(2-ny-nx)))*np.sqrt(scipy.special.binom(ny,ny/2))*np.sqrt(scipy.special.binom(nx,nx/2))*c0[ny,nx]
         return np.sqrt(np.pi*beta[0]*beta[1])*flux
     elif mode.startswith('lageurre'):
         ids=polarIDs(nmax)
@@ -64,12 +66,12 @@ def centroid(coeffs,beta,nmax,mode):
     if mode.startswith('hermite'):
         c0=np.reshape(coeffs,nmax)
         xc=np.array([0.,0.])
-        for n1 in range(nmax[0]):
-            for n2 in range(nmax[1]):
-                if n1%2==1 and n2%2==0:
-                    xc[0]+=np.sqrt(n1+1)*(2**(.5*(2-n1-n2)))*np.sqrt(scipy.special.binom(n1+1,(n1+1)/2))*np.sqrt(scipy.special.binom(n2,n2/2))*c0[n1,n2]
-                elif n1%2==0 and n2%2==1:
-                    xc[1]+=np.sqrt(n2+1)*(2**(.5*(2-n1-n2)))*np.sqrt(scipy.special.binom(n1,n1/2))*np.sqrt(scipy.special.binom(n2+1,(n2+1)/2))*c0[n1,n2]
+        for ny in range(nmax[0]):
+            for nx in range(nmax[1]):
+                if ny%2==1 and nx%2==0:
+                    xc[0]+=np.sqrt(ny+1)*(2**(.5*(2-ny-nx)))*np.sqrt(scipy.special.binom(ny+1,(ny+1)/2))*np.sqrt(scipy.special.binom(nx,nx/2))*c0[ny,nx]
+                elif ny%2==0 and nx%2==1:
+                    xc[1]+=np.sqrt(nx+1)*(2**(.5*(2-ny-nx)))*np.sqrt(scipy.special.binom(ny,ny/2))*np.sqrt(scipy.special.binom(nx+1,(nx+1)/2))*c0[ny,nx]
         return (1./f)*np.sqrt(np.pi)*beta[0]*beta[1]*xc
     elif mode.startswith('lageurre'):
         ids=polarIDs(nmax)
@@ -94,14 +96,14 @@ def quadrupoles(coeffs,beta,nmax,mode='hermite'):
     if mode.startswith('hermite'):
         c0=np.reshape(coeffs,nmax)
         xc=np.array([0.,0.])
-        for n1 in range(nmax[0]):
-            for n2 in range(nmax[1]):
-                if n1%2==1 and n2%2==1:
-                    jj[0,1]=np.sqrt(n1+1)*np.sqrt(n2+1)*(2.**(.5*(2.-n1-n2)))*np.sqrt(scipy.special.binom(n1+1,(n1+1)/2))*np.sqrt(scipy.special.binom(n2+1,(n2+1)/2))*c0[n1,n2]
-                    jj[1,0]=np.sqrt(n1+1)*np.sqrt(n2+1)*(2.**(.5*(2.-n1-n2)))*np.sqrt(scipy.special.binom(n1+1,(n1+1)/2))*np.sqrt(scipy.special.binom(n2+1,(n2+1)/2))*c0[n1,n2]
-                elif n1%2==0 and n2%2==0:
-                    jj[0,0]=(2.*n1+1)*(2.**(.5*(2.-n1-n2)))*np.sqrt(scipy.special.binom(n1,n1/2))*np.sqrt(scipy.special.binom(n2,n2/2))*c0[n1,n2]
-                    jj[1,1]=(2.*n2+1)*(2.**(.5*(2.-n1-n2)))*np.sqrt(scipy.special.binom(n1,n1/2))*np.sqrt(scipy.special.binom(n2,n2/2))*c0[n1,n2]
+        for ny in range(nmax[0]):
+            for nx in range(nmax[1]):
+                if ny%2==1 and nx%2==1:
+                    jj[0,1]=np.sqrt(ny+1)*np.sqrt(nx+1)*(2.**(.5*(2.-ny-nx)))*np.sqrt(scipy.special.binom(ny+1,(ny+1)/2))*np.sqrt(scipy.special.binom(nx+1,(nx+1)/2))*c0[ny,nx]
+                    jj[1,0]=np.sqrt(ny+1)*np.sqrt(nx+1)*(2.**(.5*(2.-ny-nx)))*np.sqrt(scipy.special.binom(ny+1,(ny+1)/2))*np.sqrt(scipy.special.binom(nx+1,(nx+1)/2))*c0[ny,nx]
+                elif ny%2==0 and nx%2==0:
+                    jj[0,0]=(2.*ny+1)*(2.**(.5*(2.-ny-nx)))*np.sqrt(scipy.special.binom(ny,ny/2))*np.sqrt(scipy.special.binom(nx,nx/2))*c0[ny,nx]
+                    jj[1,1]=(2.*nx+1)*(2.**(.5*(2.-ny-nx)))*np.sqrt(scipy.special.binom(ny,ny/2))*np.sqrt(scipy.special.binom(nx,nx/2))*c0[ny,nx]
     else:
         print 'Error: Unknown mode'
         return np.nan
@@ -118,10 +120,10 @@ def r2size(coeffs,beta,nmax,mode):
     if mode.startswith('hermite'):
         c0=np.reshape(coeffs,nmax)
         r2size=0
-        for n1 in range(nmax[0]):
-            for n2 in range(nmax[1]):
-                if n1%2==0 and n2%2==0:
-                    r2size+=(2.**(.5*(4.-n1-n2)))*(1.+n1+n2)*np.sqrt(scipy.special.binom(n1,n1/2))*np.sqrt(scipy.special.binom(n2,n2/2))*c0[n1,n2]
+        for ny in range(nmax[0]):
+            for nx in range(nmax[1]):
+                if ny%2==0 and nx%2==0:
+                    r2size+=(2.**(.5*(4.-ny-nx)))*(1.+ny+nx)*np.sqrt(scipy.special.binom(ny,ny/2))*np.sqrt(scipy.special.binom(nx,nx/2))*c0[ny,nx]
         return np.sqrt(np.pi*((beta[0]*beta[1])**3.))*(1./f)*r2size
     elif mode.startswith('lageurre'):
         ids=polarIDs(nmax)

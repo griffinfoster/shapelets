@@ -43,6 +43,8 @@ if __name__ == '__main__':
         help='Use hh:mm:ss.sss format for RA and dd:mm:ss.sss format for DEC')
     opts, args = o.parse_args(sys.argv[1:])
 
+    #TODO: override options for beta, phi
+
     #load coefficient file
     if opts.cfn is None:
         sys.exit('error:missing shapelet coefficient file')
@@ -50,17 +52,22 @@ if __name__ == '__main__':
 
     #scale beta to radians
     rotM=np.matrix([[np.cos(d['phi']),-1.*np.sin(d['phi'])],[np.sin(d['phi']),np.cos(d['phi'])]])
-    rotDeltas=(np.pi/180.)*np.dot(rotM,np.array([d['dra'],d['ddec']])) #rotate delta RA and delta Dec, convert from degrees to radians
-    betaRad=(2.*np.pi)*np.abs(np.multiply(np.array([d['beta']]),rotDeltas)) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
-
-    print d['beta'],(np.pi/180.)*np.array([d['dra'],d['ddec']]),rotDeltas,betaRad
+    temp0=np.dot(rotM,np.array([(np.pi/180.)*d['dra'],0.]))
+    temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*d['ddec']]))
+    rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
+    betaRad=(2.*np.pi)*rotDeltas*np.array(d['beta']) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
+    phi=d['phi']
+    #flip phi if dra or ddec is negative
+    #if d['dra']<0.: phi+=np.pi
+    #if d['ddec']<0.: phi+=np.pi
+    #phi=8.*np.pi/4.
 
     #generate basis functions
     print 'generating UV Basis Functions...',
     if d['mode'].startswith('herm'):
-        bfs=shapelets.decomp.genBasisFuncs([betaRad[0,0],betaRad[0,1]],d['norder'],d['phi'],fourier=True)
+        bfs=shapelets.decomp.genBasisFuncs([betaRad[0],betaRad[0]],d['norder'],phi,fourier=True)
     elif d['mode'].startswith('lag'):
-        bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0,0],betaRad[0,1]],d['norder'],d['phi'],fourier=True)
+        bfs=shapelets.decomp.genPolarBasisFuncs([betaRad[0],betaRad[0]],d['norder'],phi,fourier=True)
     print len(bfs), 'done'
 
     #parse where to insert the shapelet model
@@ -149,23 +156,28 @@ if __name__ == '__main__':
         for bfid,bf in enumerate(bfs):
             #TODO: visibilites seem to be rotated by 90 degrees
             #TODO: i think this line is correct, but the rotation and mirroring leads me to use the line below -> shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,uu.flatten(),vv.flatten())
+            #TODO: this could be at least partially due to the sign of the FITS ddec and dra
+            #shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),uu.flatten())
             shapeVis+=d['coeffs'][bfid]*shapelets.shapelet.computeBasis2d(bf,vv.flatten(),-1.*uu.flatten())
         #shapeVis+=1.*shapelets.shapelet.computeBasis2d(bfs[1],uu.flatten(),vv.flatten())
         shapeVis=rescale*np.reshape(shapeVis,uu.shape)
         print 'done'
 
         #update visibilites
-        #TODO: assuming fully linear polarization for the moment, so all the flux is going into the X receptor, this needs to be properly fixed
+        #TODO: assuming unpolarized source for the moment, this needs to be fixed properly
         print 'Updating visibilities (mode:%s)'%opts.mode
         if opts.mode.startswith('replace'):
             newVis=np.zeros_like(vis)
-            newVis[:,:,0]=shapeVis
+            newVis[:,:,0]=shapeVis/2. #XX
+            newVis[:,:,3]=shapeVis/2. #YY
         elif opts.mode.startswith('add'):
             newVis=vis
-            newVis[:,:,0]+=shapeVis
+            newVis[:,:,0]+=shapeVis/2. #XX
+            newVis[:,:,3]+=shapeVis/2. #YY
         elif opts.mode.startswith('sub'):
             newVis=vis
-            newVis[:,:,0]-=shapeVis
+            newVis[:,:,0]-=shapeVis/2. #XX
+            newVis[:,:,3]-=shapeVis/2. #YY
         else:
             print 'Unknown MS update mode, the MS will be left unchanged'
         print 'done'

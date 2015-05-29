@@ -22,12 +22,13 @@ if __name__ == '__main__':
     ifn=args[0]
     d=shapelets.fileio.readCoeffs(ifn)
 
+    ry=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
+    rx=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
+
     if d['mode'].startswith('herm'):
         #model
-        rx=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
-        ry=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
-        xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],d['phi'],xx,yy,fourier=opts.fourier)
+        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+        bvals=shapelets.decomp.genBasisMatrix(d['beta'],d['norder'],d['phi'],yy,xx,fourier=opts.fourier)
         mdl=shapelets.img.constructModel(bvals,d['coeffs'],d['size'])
 
         #coeffs
@@ -56,11 +57,13 @@ if __name__ == '__main__':
         else:
             ptitle='Laguerre'
     
+    print shapelets.measure.all(d['coeffs'],d['beta'],d['norder'],mode=d['mode'])
+
     plt.suptitle(ptitle)
     plt.subplot(121)
     plt.title('Model')
-    plt.imshow(np.abs(mdl))
-    plt.text(d['xc'][1],d['xc'][0],'+')
+    plt.imshow(np.abs(mdl),interpolation='nearest',extent=(rx[0],rx[-1],ry[-1],ry[0]))
+    plt.text(0,0,'+',horizontalalignment='center',verticalalignment='center')
     plt.colorbar()
 
     plt.subplot(122)
@@ -71,3 +74,4 @@ if __name__ == '__main__':
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)
     else: plt.show()
+

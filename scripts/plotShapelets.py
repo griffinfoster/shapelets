@@ -34,10 +34,10 @@ if __name__ == '__main__':
         beta=[float(betaphi[0]),float(betaphi[0])]
         phi=0.
     elif len(betaphi)==2:
-        beta=[float(betaphi[0]),float(betaphi[1])]
+        beta=[float(betaphi[1]),float(betaphi[0])] #x/y flip
         phi=0.
     else:
-        beta=[float(betaphi[0]),float(betaphi[1])]
+        beta=[float(betaphi[1]),float(betaphi[0])] #x/y flip
         phi=float(betaphi[2])
 
     xlim=[-5,5]
@@ -51,7 +51,7 @@ if __name__ == '__main__':
         fullImgReal=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         fullImgImag=np.zeros((len(ry)*nmax*2,len(rx)*nmax))
         yOffset=len(ry)*nmax
-        r,th=shapelets.shapelet.xy2rthGrid(rx,ry)
+        r,th=shapelets.shapelet.xy2rthGrid(ry,rx)
         for nn in range(nmax):
             for mm in np.arange(-1*nn,nn+1):
                 if (nn%2==0 and mm%2==0) or (nn%2==1 and mm%2==1):
@@ -101,21 +101,21 @@ if __name__ == '__main__':
     else:
         print 'cartesian shapelets'
         fig=plt.figure()
-        fullImg=np.zeros((len(rx)*nmax[1],len(ry)*nmax[0]))
-        xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
+        fullImg=np.zeros((len(ry)*nmax[1],len(rx)*nmax[0]))
+        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
         for n0 in range(nmax[1]):
             for n1 in range(nmax[0]):
                 if opts.fourier is None:
                     bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi)
-                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
+                    bval=shapelets.shapelet.computeBasis2d(bf,yy,xx)
                 elif opts.fourier.startswith('fft'):
                     bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi)
-                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
+                    bval=shapelets.shapelet.computeBasis2d(bf,yy,xx)
                     bval=np.abs(np.fft.fftshift(np.fft.fft2(np.fft.fftshift(bval))))
                 elif opts.fourier.startswith('scale'):
                     bf=shapelets.shapelet.dimBasis2d(n0,n1,beta=beta,phi=phi,fourier=True)
-                    bval=shapelets.shapelet.computeBasis2d(bf,xx,yy)
-                fullImg[n0*len(rx):(n0+1)*len(rx),n1*len(ry):(n1+1)*len(ry)]=bval
+                    bval=shapelets.shapelet.computeBasis2d(bf,yy,xx)
+                fullImg[n0*len(ry):(n0+1)*len(ry),n1*len(rx):(n1+1)*len(rx)]=bval
         
         plt.imshow(fullImg)
         for n0 in range(nmax[1]):
@@ -125,6 +125,8 @@ if __name__ == '__main__':
         plt.xticks(np.arange(0,len(rx)*nmax[0],len(rx))+(len(rx)/2),range(nmax[0]))
         plt.yticks(np.arange(0,len(ry)*nmax[1],len(ry))+(len(ry)/2),range(nmax[1]))
         plt.ylim(ymin=len(ry)*nmax[1],ymax=0)
+        plt.xlabel('X')
+        plt.ylabel('Y')
         plt.title('Hermite Basis Functions (Cartesian)')
         plt.colorbar()
 

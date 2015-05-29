@@ -31,8 +31,8 @@ if __name__ == '__main__':
         help='Rotation angle (radians), only used when beta is manually input, default: 0')
     o.add_option('-o', '--outfile', dest='ofn', default='shapeletCoeffs.pkl',
         help='Coefficients output filename, default: shapeletCoeffs.pkl')
-    o.add_option('--max', dest='max_pos', action="store_true", default=False,
-        help='Override centroid position to be the position of max intensity')
+    o.add_option('--centroid', dest='centroid', action="store_true", default=False,
+        help='Use the centroid position instead of max intensity position')
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
     opts, args = o.parse_args(sys.argv[1:])
@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     if not (opts.region is None):
         extent=map(int, opts.region.split(','))
-        im=shapelets.img.selPxRange(im0,extent)
+        im=shapelets.img.selPxRange(im0, [extent[2],extent[3],extent[0],extent[1]]) #numpy axis flip)
     else:
         im=im0
 
@@ -55,9 +55,8 @@ if __name__ == '__main__':
     else:
         #use a specific region for noise estimation
         nextent=map(int, opts.nregion.split(','))
-        mean,std=shapelets.img.estimateNoise(shapelets.img.selPxRange(im0,nextent),mode='basic')
+        mean,std=shapelets.img.estimateNoise(shapelets.img.selPxRange(im0,[nextent[2],nextent[3],nextent[0],nextent[1]]),mode='basic')
         nm=shapelets.img.makeNoiseMap(im.shape,mean,std)
-    exit()
 
     #select initial beta, phi, and xc
     if opts.beta==None:
@@ -68,31 +67,31 @@ if __name__ == '__main__':
         if len(beta0)==1:
             beta0=[beta0[0],beta0[0]]
         else:
-            beta0=[beta0[0],beta0[1]]
-    
-    if opts.max_pos:
-        xc=shapelets.img.maxPos(im)
-    elif opts.xc==None:
+            beta0=[beta0[1],beta0[0]] #input to numpy flip
+
+    if opts.centroid:
         xc=shapelets.img.centroid(im)
+    elif opts.xc==None:
+        xc=shapelets.img.maxPos(im)
     else:
         xc=map(float,opts.xc.split(','))
-        #correct for position if using only a region of the image
-        #xc[0]-=extent[0]
-        #xc[1]-=extent[2]
+        xc=[xc[1],xc[0]] #input to numpy flip
 
     nmax=opts.nmax.split(',')
     if len(nmax)==1:
         nmax=[int(nmax[0])+1,int(nmax[0])+1]
     else:
-        nmax=[int(nmax[0])+1,int(nmax[1])+1]
+        nmax=[int(nmax[1])+1,int(nmax[0])+1] #input to numpy flip
 
-    print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[0],beta0[1],phi0,xc[0],xc[1],nmax[0]-1,nmax[1]-1)
+    print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[1],beta0[0],phi0,xc[1],xc[0],nmax[1]-1,nmax[0]-1)
 
     #determine (RA,dec) coordinates for centroid position
     if extent is None:
         radec=hdr['wcs'].wcs_pix2sky(np.array([xc]),1)[0] #unit: degrees
     else:
         radec=hdr['wcs'].wcs_pix2sky(np.array([[xc[0]+extent[0],xc[1]+extent[2]]]),1)[0] #unit: degrees
+
+    print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
     if opts.mode.startswith('pol'):
         r0,th0=shapelets.shapelet.polarArray(xc,im.shape)
@@ -102,13 +101,15 @@ if __name__ == '__main__':
         ax = fig.add_subplot(221)
         plt.title('Image')
         plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=xc,width=2.*np.max(beta0),height=2.*np.min(beta0),angle=(180.*phi0/np.pi))
+        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.3)
         e.set_facecolor('black')
         ax.add_artist(e)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
         
         plt.subplot(222)
         plt.title('Model')
@@ -116,13 +117,18 @@ if __name__ == '__main__':
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,im.shape))
         plt.imshow(mdl)
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
         
         plt.subplot(223)
         plt.title('Residual')
         res=im-mdl
         plt.imshow(res)
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
         
         plt.subplot(224)
         plt.title('Coefficients')
@@ -137,38 +143,44 @@ if __name__ == '__main__':
         print 'Writing to file:',ofn
         shapelets.fileio.writeLageurreCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
-    else:
+    elif opts.mode.startswith('cart'):
 
         #plot: data, model, residual: model-data, coeffs
         fig = plt.figure()
         ax = fig.add_subplot(221)
         plt.title('Image')
         plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=xc,width=2.*np.max(beta0),height=2.*np.min(beta0),angle=(180.*phi0/np.pi))
+        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
         e.set_clip_box(ax.bbox)
         e.set_alpha(0.3)
         e.set_facecolor('black')
         ax.add_artist(e)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
         
         plt.subplot(222)
         plt.title('Model')
-        rx=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        ry=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
-        xx,yy=shapelets.shapelet.xy2Grid(rx,ry)
-        bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,xx,yy)
+        ry=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+        rx=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+        bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,yy,xx)
         coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
         plt.imshow(mdl)
-        plt.text(xc[0],xc[1],'+',horizontalalignment='center',verticalalignment='center')
+        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
         
         plt.subplot(223)
         plt.title('Residual')
         res=im-mdl
         plt.imshow(res)
         plt.colorbar()
+        plt.xlabel('X/RA')
+        plt.ylabel('Y/Dec')
 
         plt.subplot(224)
         plt.title('Coefficients')
@@ -183,3 +195,4 @@ if __name__ == '__main__':
     if not (opts.savefig is None):
         plt.savefig(opts.savefig)
     else: plt.show()
+
