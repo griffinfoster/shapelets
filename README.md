@@ -2,7 +2,7 @@ shapelets
 ===
 
 Created: 15.02.12  
-Last Modified: 22.05.15  
+Last Modified: 01.06.15  
 Contact: griffin.foster@gmail.com  
 
 A python module for fitting and decomposing images (FITS,PNG,JPEG...) into shapelet coefficients, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
@@ -10,25 +10,22 @@ A python module for fitting and decomposing images (FITS,PNG,JPEG...) into shape
 Based on the shapelet framework developed in [Shapelets: I. A Method for Image Analysis](http://arxiv.org/abs/astro-ph/0105178) and the [IDL shapelet software](http://www.astro.caltech.edu/~rjm/shapelets/). 
 
 #### Required Python Modules
-===
 
 * distutils (usually a standard install with python)
 * cPickle (usually a standard install with python) 
 * matplotlib 
-* numpy 
+* numpy
 * scipy 
 * pyfits 
 * json
 * pywcs
 * pyrap 
 
-#### Recommended Python Modules
-===
+#### Optional Python Modules
 
 * PIL 
 
 #### Install
-===
 
 While developing it is useful to do a developer install:
 
@@ -43,7 +40,6 @@ sudo python setup.py install
 ```
 
 #### Usage
-===
 
 The scripts directory contains a number scripts for plotting, decomposing, and fitting.
 
@@ -55,7 +51,6 @@ The scripts directory contains a number scripts for plotting, decomposing, and f
 * insertShapelet.py : insert a shapelet coefficient set into a Measurement Set
 
 #### Examples
-===
 
 ```
 plotShapelets.py -n 4 -p -b 1.0,1.0,0.44

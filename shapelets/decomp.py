@@ -229,6 +229,9 @@ def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_
         beta1=0.
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(beta0,beta1,phi,xc,yc)
 
+    #update noise map
+    nm=img.makeNoiseMap(nm.shape,np.mean(nm),np.std(nm))
+
     size=im.shape
     if fitParams['xc'] or r is None:
         r,th=shapelet.polarArray([yc,xc],size) #the radius,theta pairs need to updated if fitting for the xc centre or if not using the r,th inputs
@@ -304,6 +307,9 @@ def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_beta=
         print 'warning: beta going negative, setting to 0.0'
         betaY=0.
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(betaX,betaY,phi,xc,yc)
+
+    #update noise map
+    nm=img.makeNoiseMap(nm.shape,np.mean(nm),np.std(nm))
 
     size=im.shape
     if fitParams['xc'] or xx is None:
