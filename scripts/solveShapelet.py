@@ -86,10 +86,11 @@ if __name__ == '__main__':
     print 'Using beta: (%f,%f) :: \tphi: %f radians :: \tcentre: x,y=(%f,%f) :: \tnmax: (%i,%i)'%(beta0[1],beta0[0],phi0,xc[1],xc[0],nmax[1]-1,nmax[0]-1)
 
     #determine (RA,dec) coordinates for centroid position
+    #TODO: this is correct for when the FITS header is delta RA<0 and delta Dec>0, this may need to be generalized
     if extent is None:
-        radec=hdr['wcs'].wcs_pix2sky(np.array([xc]),1)[0] #unit: degrees
+        radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+1,xc[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
     else:
-        radec=hdr['wcs'].wcs_pix2sky(np.array([[xc[0]+extent[0],xc[1]+extent[2]]]),1)[0] #unit: degrees
+        radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
 
     print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
@@ -136,7 +137,8 @@ if __name__ == '__main__':
         cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax)
         cimI=np.fliplr(cimI)
         cim=np.concatenate((cimR,cimI),axis=1)
-        plt.pcolor(cim)
+        #plt.pcolor(cim)
+        plt.imshow(cim,interpolation='nearest',origin='lower')
         plt.colorbar()
 
         ofn=opts.ofn
@@ -185,7 +187,8 @@ if __name__ == '__main__':
         plt.subplot(224)
         plt.title('Coefficients')
         sqCoeffs=np.reshape(coeffs,nmax)
-        plt.pcolor(sqCoeffs)
+        #plt.pcolor(sqCoeffs)
+        plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
         plt.colorbar()
         
         ofn=opts.ofn

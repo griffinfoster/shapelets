@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     fn=args[0]
     if fn.split('.')[-1].lower() == 'fits':
-        im=shapelets.fileio.readFITS(fn)
+        im,hdr=shapelets.fileio.readFITS(fn,hdr=True)
     else:
         im=shapelets.fileio.readImg(fn)
     if not (opts.region is None):

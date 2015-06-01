@@ -57,7 +57,7 @@ def initParams(im,mode='basic',frac=.2,hdr=None):
         params=initGaussian(im)
         errorfunction = lambda p: np.ravel(ellipticalGaussian2D(*p)(*np.indices(im.shape)) - im)
         p, success = optimize.leastsq(errorfunction, params)
-        Theta_max=2.3548*np.array([p[2],p[3]]) #FWHM
+        Theta_max=np.abs(2.3548*np.array([p[2],p[3]])) #FWHM, the fitter can return negative values of sigma
 
         #compute PSF size in pixels
         bpa=np.pi*hdr['bpa']/180.

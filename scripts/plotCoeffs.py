@@ -7,6 +7,7 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plt
 import shapelets
+import shapelets.phs
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -24,6 +25,9 @@ if __name__ == '__main__':
 
     ry=np.array(range(0,d['size'][0]),dtype=float)-d['xc'][0]
     rx=np.array(range(0,d['size'][1]),dtype=float)-d['xc'][1]
+
+    print 'RA:', shapelets.phs.rad2hmsdms.rad2hmsdms(d['ra'],Type="ra",deg=True)
+    print 'Dec:', shapelets.phs.rad2hmsdms.rad2hmsdms(d['dec'],Type="dec",deg=True)
 
     if d['mode'].startswith('herm'):
         #model
@@ -68,7 +72,8 @@ if __name__ == '__main__':
 
     plt.subplot(122)
     plt.title('Coefficients')
-    plt.pcolor(coeffs)
+    #plt.pcolor(coeffs)
+    plt.imshow(coeffs,interpolation='nearest',origin='lower')
     plt.colorbar()
     
     if not (opts.savefig is None):

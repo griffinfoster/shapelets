@@ -224,7 +224,8 @@ if __name__ == '__main__':
         cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax1)
         cimI=np.fliplr(cimI)
         cim=np.concatenate((cimR,cimI),axis=1)
-        plt.pcolor(cim)
+        #plt.pcolor(cim)
+        plt.imshow(cim,interpolation='nearest',origin='lower')
         plt.colorbar()
 
         #determine (RA,dec) coordinates for centroid position
@@ -355,7 +356,8 @@ if __name__ == '__main__':
         plt.subplot(224)
         plt.title('Coefficients')
         sqCoeffs=np.reshape(coeffs,nmax1)
-        plt.pcolor(sqCoeffs)
+        #plt.pcolor(sqCoeffs)
+        plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
         plt.colorbar()
         
         #determine (RA,dec) coordinates for centroid position
