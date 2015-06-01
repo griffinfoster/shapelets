@@ -5,8 +5,6 @@ Solve for shapelet coefficients based on beta, xc, phi, and n_max
 
 import sys
 import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib.patches
 import shapelets
 import pywcs
 
@@ -35,7 +33,15 @@ if __name__ == '__main__':
         help='Use the centroid position instead of max intensity position')
     o.add_option('-s', '--savefig', dest='savefig', default=None,
         help='Save the figure, requires filename')
+    o.add_option('--noplot', dest='noplot', action='store_true',
+        help='Do no show plots')
     opts, args = o.parse_args(sys.argv[1:])
+    
+    #import matplotlib if needed
+    show_plots = not opts.noplot
+    if show_plots:
+        from matplotlib import pyplot as plt
+        import matplotlib.patches
 
     ifn=args[0]
     im0,hdr=shapelets.fileio.readFITS(ifn,hdr=True)
@@ -98,48 +104,49 @@ if __name__ == '__main__':
         r0,th0=shapelets.shapelet.polarArray(xc,im.shape)
 
         #plot: data, model, residual: model-data, coeffs
-        fig = plt.figure()
-        ax = fig.add_subplot(221)
-        plt.title('Image')
-        plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
-        e.set_clip_box(ax.bbox)
-        e.set_alpha(0.3)
-        e.set_facecolor('black')
-        ax.add_artist(e)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
-        
-        plt.subplot(222)
-        plt.title('Model')
-        bvals=shapelets.decomp.genPolarBasisMatrix(beta0,nmax,phi0,r0,th0)
-        coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-        mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,im.shape))
-        plt.imshow(mdl)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
-        
-        plt.subplot(223)
-        plt.title('Residual')
-        res=im-mdl
-        plt.imshow(res)
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
-        
-        plt.subplot(224)
-        plt.title('Coefficients')
-        cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax)
-        cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax)
-        cimI=np.fliplr(cimI)
-        cim=np.concatenate((cimR,cimI),axis=1)
-        #plt.pcolor(cim)
-        plt.imshow(cim,interpolation='nearest',origin='lower')
-        plt.colorbar()
+        if show_plots:
+            fig = plt.figure()
+            ax = fig.add_subplot(221)
+            plt.title('Image')
+            plt.imshow(im)
+            e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(0.3)
+            e.set_facecolor('black')
+            ax.add_artist(e)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
+            
+            plt.subplot(222)
+            plt.title('Model')
+            bvals=shapelets.decomp.genPolarBasisMatrix(beta0,nmax,phi0,r0,th0)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
+            mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,im.shape))
+            plt.imshow(mdl)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
+            
+            plt.subplot(223)
+            plt.title('Residual')
+            res=im-mdl
+            plt.imshow(res)
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
+            
+            plt.subplot(224)
+            plt.title('Coefficients')
+            cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax)
+            cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax)
+            cimI=np.fliplr(cimI)
+            cim=np.concatenate((cimR,cimI),axis=1)
+            #plt.pcolor(cim)
+            plt.imshow(cim,interpolation='nearest',origin='lower')
+            plt.colorbar()
 
         ofn=opts.ofn
         print 'Writing to file:',ofn
@@ -148,54 +155,56 @@ if __name__ == '__main__':
     elif opts.mode.startswith('cart'):
 
         #plot: data, model, residual: model-data, coeffs
-        fig = plt.figure()
-        ax = fig.add_subplot(221)
-        plt.title('Image')
-        plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
-        e.set_clip_box(ax.bbox)
-        e.set_alpha(0.3)
-        e.set_facecolor('black')
-        ax.add_artist(e)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
-        
-        plt.subplot(222)
-        plt.title('Model')
-        ry=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
-        rx=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
-        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
-        bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,yy,xx)
-        coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-        mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
-        plt.imshow(mdl)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
-        
-        plt.subplot(223)
-        plt.title('Residual')
-        res=im-mdl
-        plt.imshow(res)
-        plt.colorbar()
-        plt.xlabel('X/RA')
-        plt.ylabel('Y/Dec')
+        if show_plots:
+            fig = plt.figure()
+            ax = fig.add_subplot(221)
+            plt.title('Image')
+            plt.imshow(im)
+            e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi)) #numpy to matplotlib flip
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(0.3)
+            e.set_facecolor('black')
+            ax.add_artist(e)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
+            
+            plt.subplot(222)
+            plt.title('Model')
+            ry=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+            rx=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+            yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+            bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,yy,xx)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
+            mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
+            plt.imshow(mdl)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center') #numpy to matplotlib flip
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
+            
+            plt.subplot(223)
+            plt.title('Residual')
+            res=im-mdl
+            plt.imshow(res)
+            plt.colorbar()
+            plt.xlabel('X/RA')
+            plt.ylabel('Y/Dec')
 
-        plt.subplot(224)
-        plt.title('Coefficients')
-        sqCoeffs=np.reshape(coeffs,nmax)
-        #plt.pcolor(sqCoeffs)
-        plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
-        plt.colorbar()
+            plt.subplot(224)
+            plt.title('Coefficients')
+            sqCoeffs=np.reshape(coeffs,nmax)
+            #plt.pcolor(sqCoeffs)
+            plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
+            plt.colorbar()
         
         ofn=opts.ofn
         print 'Writing to file:',ofn
         shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc,im.shape,beta0,phi0,nmax,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
-    if not (opts.savefig is None):
-        plt.savefig(opts.savefig)
-    else: plt.show()
+    if show_plots:
+        if not (opts.savefig is None):
+            plt.savefig(opts.savefig)
+        else: plt.show()
 

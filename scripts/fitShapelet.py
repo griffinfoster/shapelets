@@ -5,8 +5,6 @@ Fit for shapelet coefficients across beta, xc, phi, and n_max
 
 import sys
 import numpy as np
-from matplotlib import pyplot as plt
-import matplotlib.patches
 from scipy import optimize
 import shapelets
 import pywcs
@@ -54,7 +52,16 @@ if __name__ == '__main__':
         help='Maximum number of iterations to perform, default: 250')
     o.add_option('-B', '--brute', dest='brute', default=15, type='int',
         help='Maximum basis function order to use when running brute force method, default: 15')
+
+    o.add_option('--noplot', dest='noplot', action='store_true',
+        help='Do no show plots')
     opts, args = o.parse_args(sys.argv[1:])
+
+    #import matplotlib if needed
+    show_plots = not opts.noplot
+    if show_plots:
+        from matplotlib import pyplot as plt
+        import matplotlib.patches
 
     ifn=args[0]
     im0,hdr=shapelets.fileio.readFITS(ifn,hdr=True)
@@ -191,49 +198,49 @@ if __name__ == '__main__':
         print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f, %f) (sub image: %f,%f) pixels \t ncoeffs: %i x %i'%(beta1[1], beta1[0], phi1, xc1[1]+extent[2], xc1[0]+extent[0], xc1[1], xc1[0], nmax1[1],nmax1[0])
 
         #plot: data, model, residual: model-data, coeffs
-        fig = plt.figure()
-        ax = fig.add_subplot(221)
-        plt.title('Image')
-        plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
-        e.set_clip_box(ax.bbox)
-        e.set_alpha(0.3)
-        e.set_facecolor('black')
-        ax.add_artist(e)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
-        plt.colorbar()
-        
-        plt.subplot(222)
-        plt.title('Model')
-        r1,th1=shapelets.shapelet.polarArray(xc1,im.shape)
-        bvals=shapelets.decomp.genPolarBasisMatrix(beta1,nmax1,phi1,r1,th1)
-        coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-        mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,im.shape))
-        plt.imshow(mdl)
-        plt.colorbar()
-        
-        plt.subplot(223)
-        plt.title('Residual')
-        res=im-mdl
-        plt.imshow(res)
-        plt.colorbar()
-        
-        plt.subplot(224)
-        plt.title('Coefficients')
-        cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax1)
-        cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax1)
-        cimI=np.fliplr(cimI)
-        cim=np.concatenate((cimR,cimI),axis=1)
-        #plt.pcolor(cim)
-        plt.imshow(cim,interpolation='nearest',origin='lower')
-        plt.colorbar()
+        if show_plots:
+            fig = plt.figure()
+            ax = fig.add_subplot(221)
+            plt.title('Image')
+            plt.imshow(im)
+            e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(0.3)
+            e.set_facecolor('black')
+            ax.add_artist(e)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
+            plt.colorbar()
+            
+            plt.subplot(222)
+            plt.title('Model')
+            r1,th1=shapelets.shapelet.polarArray(xc1,im.shape)
+            bvals=shapelets.decomp.genPolarBasisMatrix(beta1,nmax1,phi1,r1,th1)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
+            mdl=np.abs(shapelets.img.constructModel(bvals,coeffs,im.shape))
+            plt.imshow(mdl)
+            plt.colorbar()
+            
+            plt.subplot(223)
+            plt.title('Residual')
+            res=im-mdl
+            plt.imshow(res)
+            plt.colorbar()
+            
+            plt.subplot(224)
+            plt.title('Coefficients')
+            cimR=shapelets.img.polarCoeffImg(coeffs.real,nmax1)
+            cimI=shapelets.img.polarCoeffImg(coeffs.imag,nmax1)
+            cimI=np.fliplr(cimI)
+            cim=np.concatenate((cimR,cimI),axis=1)
+            #plt.pcolor(cim)
+            plt.imshow(cim,interpolation='nearest',origin='lower')
+            plt.colorbar()
 
         #determine (RA,dec) coordinates for centroid position
         if extent is None:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([xc1]),1)[0] #unit: degrees
+            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+1,xc1[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
         else:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
-            #radec=hdr['wcs'].wcs_pix2sky(np.array([[extent[1]-xc1[0],extent[3]-xc1[1]]]),1)[0] #unit: degrees
+            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc1[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
 
         print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
@@ -323,48 +330,49 @@ if __name__ == '__main__':
         print '\tbeta: (%f,%f) \tphi: %f rad \tcentroid: (%f, %f) (sub image: %f,%f) pixels \t ncoeffs: %i x %i'%(beta1[1], beta1[0], phi1, xc1[1]+extent[2], xc1[0]+extent[0], xc1[1], xc1[0], nmax1[1],nmax1[0])
 
         #plot: data, model, residual: model-data, coeffs
-        fig = plt.figure()
-        ax = fig.add_subplot(221)
-        plt.title('Image')
-        plt.imshow(im)
-        e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
-        e.set_clip_box(ax.bbox)
-        e.set_alpha(0.3)
-        e.set_facecolor('black')
-        ax.add_artist(e)
-        plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
-        plt.colorbar()
-        
-        plt.subplot(222)
-        plt.title('Model')
-        ry=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
-        rx=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
-        yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
-        bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,yy,xx)
-        coeffs=shapelets.decomp.solveCoeffs(bvals,im)
-        mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
-        plt.imshow(mdl)
-        plt.text(xc1[1],xc1[0],'+',horizontalalignment='center',verticalalignment='center')
-        plt.colorbar()
-        
-        plt.subplot(223)
-        plt.title('Residual')
-        res=im-mdl
-        plt.imshow(res)
-        plt.colorbar()
+        if show_plots:
+            fig = plt.figure()
+            ax = fig.add_subplot(221)
+            plt.title('Image')
+            plt.imshow(im)
+            e=matplotlib.patches.Ellipse(xy=[xc[1],xc[0]],width=2.*beta0[1],height=2.*beta0[0],angle=(180.*phi0/np.pi))
+            e.set_clip_box(ax.bbox)
+            e.set_alpha(0.3)
+            e.set_facecolor('black')
+            ax.add_artist(e)
+            plt.text(xc[1],xc[0],'+',horizontalalignment='center',verticalalignment='center')
+            plt.colorbar()
+            
+            plt.subplot(222)
+            plt.title('Model')
+            ry=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
+            rx=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
+            yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+            bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,yy,xx)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
+            mdl=shapelets.img.constructModel(bvals,coeffs,im.shape)
+            plt.imshow(mdl)
+            plt.text(xc1[1],xc1[0],'+',horizontalalignment='center',verticalalignment='center')
+            plt.colorbar()
+            
+            plt.subplot(223)
+            plt.title('Residual')
+            res=im-mdl
+            plt.imshow(res)
+            plt.colorbar()
 
-        plt.subplot(224)
-        plt.title('Coefficients')
-        sqCoeffs=np.reshape(coeffs,nmax1)
-        #plt.pcolor(sqCoeffs)
-        plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
-        plt.colorbar()
+            plt.subplot(224)
+            plt.title('Coefficients')
+            sqCoeffs=np.reshape(coeffs,nmax1)
+            #plt.pcolor(sqCoeffs)
+            plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
+            plt.colorbar()
         
         #determine (RA,dec) coordinates for centroid position
         if extent is None:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([xc1]),1)[0] #unit: degrees
+            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+1,xc1[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
         else:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([[xc1[0]+extent[0],xc1[1]+extent[2]]]),1)[0] #unit: degrees
+            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc1[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
 
         print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
@@ -372,7 +380,8 @@ if __name__ == '__main__':
         print 'Writing to file:',ofn
         shapelets.fileio.writeHermiteCoeffs(ofn,coeffs,xc1,im.shape,beta1,phi1,nmax1,info=ifn,pos=[radec[0],radec[1],hdr['dra'],hdr['ddec']])
         
-    if not (opts.savefig is None):
-        plt.savefig(opts.savefig)
-    else: plt.show()
+    if show_plots:
+        if not (opts.savefig is None):
+            plt.savefig(opts.savefig)
+        else: plt.show()
 
