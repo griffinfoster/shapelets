@@ -97,20 +97,21 @@ def xc2radec(xc,hdr,offset=[0.,0.]):
     dec=(hdr['decPix']-(offset[0]+xc[0]))*hdr['ddec']+hdr['dec']
     return ra,dec
 
-def beta2size(beta,hdr=None,dra=1.,ddec=1.):
-    """Convert a beta pixel size to celestial size
-    requires either FITS header (hdr) or the delta RA (dra) and delta DEC (ddec)
-    """
-    if type(beta)==list:
-        if hdr is None:
-            return [np.abs(beta[1]*dra),np.abs(beta[0]*ddec)]
-        else:
-            return [np.abs(beta[1]*hdr['dra']),np.abs(beta[0]*hdr['ddec'])]
-    else:
-        if hdr is None:
-            return [np.abs(beta*dra),np.abs(beta*ddec)]
-        else:
-            return [np.abs(beta*hdr['dra']),np.abs(beta*hdr['ddec'])]
+#This has been superseded by measure.beta_pix2angle()
+#def beta2size(beta,hdr=None,dra=1.,ddec=1.):
+#    """Convert a beta pixel size to celestial size
+#    requires either FITS header (hdr) or the delta RA (dra) and delta DEC (ddec)
+#    """
+#    if type(beta)==list:
+#        if hdr is None:
+#            return [np.abs(beta[1]*dra),np.abs(beta[0]*ddec)]
+#        else:
+#            return [np.abs(beta[1]*hdr['dra']),np.abs(beta[0]*hdr['ddec'])]
+#    else:
+#        if hdr is None:
+#            return [np.abs(beta*dra),np.abs(beta*ddec)]
+#        else:
+#            return [np.abs(beta*hdr['dra']),np.abs(beta*hdr['ddec'])]
 
 if __name__ == "__main__":
 
@@ -198,13 +199,13 @@ if __name__ == "__main__":
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    #beta2size
-    tc+=1
-    try:
-        print beta2size([4.5,6.],dra=3.,ddec=4.)
-    except:
-        print 'Test failed (%i):'%tc, sys.exc_info()[0]
-        te+=1
+    ##beta2size
+    #tc+=1
+    #try:
+    #    print beta2size([4.5,6.],dra=3.,ddec=4.)
+    #except:
+    #    print 'Test failed (%i):'%tc, sys.exc_info()[0]
+    #    te+=1
 
     print '============================================'
     print '%i of %i tests succeeded'%(tc-te,tc)

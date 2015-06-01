@@ -147,6 +147,9 @@ if __name__ == '__main__':
             #plt.pcolor(cim)
             plt.imshow(cim,interpolation='nearest',origin='lower')
             plt.colorbar()
+        else:
+            bvals=shapelets.decomp.genPolarBasisMatrix(beta0,nmax,phi0,r0,th0)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
 
         ofn=opts.ofn
         print 'Writing to file:',ofn
@@ -198,6 +201,12 @@ if __name__ == '__main__':
             #plt.pcolor(sqCoeffs)
             plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
             plt.colorbar()
+        else:
+            ry=np.array(range(0,im.shape[0]),dtype=float)-xc[0]
+            rx=np.array(range(0,im.shape[1]),dtype=float)-xc[1]
+            yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+            bvals=shapelets.decomp.genBasisMatrix(beta0,nmax,phi0,yy,xx)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         
         ofn=opts.ofn
         print 'Writing to file:',ofn

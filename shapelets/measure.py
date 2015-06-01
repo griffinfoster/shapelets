@@ -2,11 +2,24 @@
 Measurement operations
 """
 
-#TODO: shear estimator
-#TODO: convert beta to angle on the sky, currently they are in pixels
-#TODO: R**2 returns negative values
 import numpy as np
 import scipy.special
+
+def beta_pix2angle(beta,phi=0.,hdr=None,deltas=[1.,1.]):
+    """Convert a beta in units of pixels to angluar size (radians)
+    """
+    rotM=np.matrix([[np.cos(phi),-1.*np.sin(phi)],[np.sin(phi),np.cos(phi)]])
+    if hdr is None:
+        dra=np.abs(deltas[0])
+        ddec=np.abs(deltas[1])
+    else:
+        dra=np.abs(hdr['dra'])
+        ddec=np.abs(hdr['ddec'])
+    temp0=np.dot(rotM,np.array([(np.pi/180.)*dra,0.]))
+    temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*ddec]))
+    rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
+    betaRad=(2.*np.pi)*rotDeltas*np.array(beta) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
+    return betaRad
 
 def polarIDs(nmax):
     """Given an nmax, convert to (n.m) polar ID pairs
@@ -174,17 +187,6 @@ def all(coeffs,beta,nmax,mode):
     else:
         print 'Error: Unknown mode'
         return np.nan
-
-#TODO: cartesian to polar coeff transform
-#def cart2polar(coeffs,nmax):
-#    """Convert coefficients from Hermite Cartesian to Lageurre Polar
-#    coeffs: shapelet coefficients
-#    nmax: coefficient limit
-#    """
-#    ids=polarIDs(nmax)
-#    pcoeffs=np.zeros(len(ids))
-#    for cnt,i in enumerate(ids):
-        
 
 if __name__ == "__main__":
 

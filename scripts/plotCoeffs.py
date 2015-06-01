@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import shapelets
 import shapelets.phs
+import pprint
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -61,7 +62,8 @@ if __name__ == '__main__':
         else:
             ptitle='Laguerre'
     
-    print shapelets.measure.all(d['coeffs'],d['beta'],d['norder'],mode=d['mode'])
+    betaRad=shapelets.measure.beta_pix2angle(d['beta'],phi=d['phi'],deltas=[d['dra'],d['ddec']]) #convert beta[pixels] to beta[radians]
+    pprint.pprint(shapelets.measure.all(d['coeffs'],betaRad,d['norder'],mode=d['mode']))
 
     plt.suptitle(ptitle)
     plt.subplot(121)

@@ -87,7 +87,7 @@ sS'ra'
 p25
 g5
 (g7
-S',\xc2\xc7Mss_@'
+S'\x8cZN\xe3\xf6|_@'
 tRp26
 sS'dra'
 p27
@@ -96,7 +96,7 @@ sS'dec'
 p28
 g5
 (g7
-S'S\xc0\xb7U\xbc\xcfE\xc0'
+S'\xad\xfd\xb0!Z\x97E\xc0'
 tRp29
 sS'mode'
 p30

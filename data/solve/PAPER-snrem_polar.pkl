@@ -96,7 +96,7 @@ sS'ra'
 p26
 g5
 (g7
-S',\xc2\xc7Mss_@'
+S'\x8cZN\xe3\xf6|_@'
 tRp27
 sS'dra'
 p28
@@ -105,7 +105,7 @@ sS'dec'
 p29
 g5
 (g7
-S'S\xc0\xb7U\xbc\xcfE\xc0'
+S'\xad\xfd\xb0!Z\x97E\xc0'
 tRp30
 sS'mode'
 p31

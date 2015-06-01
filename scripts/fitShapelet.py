@@ -235,6 +235,10 @@ if __name__ == '__main__':
             #plt.pcolor(cim)
             plt.imshow(cim,interpolation='nearest',origin='lower')
             plt.colorbar()
+        else:
+            r1,th1=shapelets.shapelet.polarArray(xc1,im.shape)
+            bvals=shapelets.decomp.genPolarBasisMatrix(beta1,nmax1,phi1,r1,th1)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
 
         #determine (RA,dec) coordinates for centroid position
         if extent is None:
@@ -367,6 +371,12 @@ if __name__ == '__main__':
             #plt.pcolor(sqCoeffs)
             plt.imshow(sqCoeffs,interpolation='nearest',origin='lower')
             plt.colorbar()
+        else:
+            ry=np.array(range(0,im.shape[0]),dtype=float)-xc1[0]
+            rx=np.array(range(0,im.shape[1]),dtype=float)-xc1[1]
+            yy,xx=shapelets.shapelet.xy2Grid(ry,rx)
+            bvals=shapelets.decomp.genBasisMatrix(beta1,nmax1,phi1,yy,xx)
+            coeffs=shapelets.decomp.solveCoeffs(bvals,im)
         
         #determine (RA,dec) coordinates for centroid position
         if extent is None:

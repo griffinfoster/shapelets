@@ -67,6 +67,7 @@ def dimBasis2d(n0,n1,beta=[1.,1.],phi=0.,fourier=False):
     return lambda y,x: exp0(m[0,0]*y+m[0,1]*x)*exp1(m[1,0]*y+m[1,1]*x)
 
 #TODO: make into an elliptical form?
+#TODO: fourier transform is not quite correct
 def polarDimBasis(n0,m0,beta=1.,phi=0.,fourier=False):
     """Polar dimensional basis function based on Laguerre polynomials of characteristic size beta
     phi: rotation angle
