@@ -43,24 +43,40 @@ if __name__ == '__main__':
         help='Use hh:mm:ss.sss format for RA and dd:mm:ss.sss format for DEC')
     opts, args = o.parse_args(sys.argv[1:])
 
-    #TODO: override options for beta, phi
+    o.add_option('-b','--beta',dest='beta',default=None,
+        help='Override beta (in pixels), can be a 1, 2, or 3 comma seperated values')
 
     #load coefficient file
     if opts.cfn is None:
         sys.exit('error:missing shapelet coefficient file')
     d=shapelets.fileio.readCoeffs(opts.cfn)
 
+    #override beta if input as option
+    if opts.beta is None:
+        beta=d['beta']
+        phi=d['phi']
+    else:
+        betaList=map(float,opts.beta.split(','))
+        if len(betaList)==1: beta=[betaList[0],betaList[0]]
+        elif len(betaList)==2: beta=betaList
+        elif len(betaList)==3:
+            beta=[betaList[0],betaList[1]])
+            phi=betaList[2]
+
+    ##scale beta to radians
+    #rotM=np.matrix([[np.cos(d['phi']),-1.*np.sin(d['phi'])],[np.sin(d['phi']),np.cos(d['phi'])]])
+    #temp0=np.dot(rotM,np.array([(np.pi/180.)*d['dra'],0.]))
+    #temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*d['ddec']]))
+    #rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
+    #betaRad=(2.*np.pi)*rotDeltas*np.array(d['beta']) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
+    #phi=d['phi']
+
     #scale beta to radians
-    rotM=np.matrix([[np.cos(d['phi']),-1.*np.sin(d['phi'])],[np.sin(d['phi']),np.cos(d['phi'])]])
+    rotM=np.matrix([[np.cos(phi),-1.*np.sin(phi)],[np.sin(phi),np.cos(phi)]])
     temp0=np.dot(rotM,np.array([(np.pi/180.)*d['dra'],0.]))
     temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*d['ddec']]))
     rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
-    betaRad=(2.*np.pi)*rotDeltas*np.array(d['beta']) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
-    phi=d['phi']
-    #flip phi if dra or ddec is negative
-    #if d['dra']<0.: phi+=np.pi
-    #if d['ddec']<0.: phi+=np.pi
-    #phi=8.*np.pi/4.
+    betaRad=(2.*np.pi)*rotDeltas*np.array(beta) #there is some mathematical convention issue, something about wavenumber and wavelength...should sort out a clear answer
 
     #generate basis functions
     print 'generating UV Basis Functions...',
