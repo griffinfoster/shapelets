@@ -7,7 +7,7 @@ import numpy as np
 from scipy.misc import factorial
 
 #TODO: polar version
-def psfMatrix(g,gamma,alpha,beta,lmax,mmax,nmax,mode='hermite'):
+def psfMatrix(gl,gamma,alpha,beta,lmax,mmax,nmax,mode='hermite'):
     """Compute the PSF matrix as defined in Refregier and Bacon 2003 Section 3.2
     g: shapelet coefficents of the PSF
     gamma, alpha, beta: scale factors (float)
@@ -21,7 +21,7 @@ def psfMatrix(g,gamma,alpha,beta,lmax,mmax,nmax,mode='hermite'):
         if type(mmax)==int: nmax=[mmax,mmax]
         if type(lmax)==int: nmax=[lmax,lmax]
         C=generate2dClmnTensor(gamma,alpha,beta,lmax,mmax,nmax) #compute convolution tensor [Refregier and Bacon 2003 eq. 6-11]
-        return np.reshape( np.tensordot(C,g,axes=[[0,1],[0,1]]), (C.shape[2]*C.shape[3], C.shape[4]*C.shape[5]) ) #return convolution tensor x g [Refregier and Bacon 2003 section 3.2]
+        return np.reshape( np.tensordot(C,gl,axes=[[0,1],[0,1]]), (C.shape[2]*C.shape[3], C.shape[4]*C.shape[5]) ) #return convolution tensor x g [Refregier and Bacon 2003 section 3.2]
 
 def generateLlmnTensor(a,b,c,lmax,mmax,nmax):
     """Generate the recursive relation L tensor [Refregier and Bacon 2003 eq. 11]
@@ -96,6 +96,16 @@ def generate2dClmnTensor(a,b,c,lmax,mmax,nmax):
     C=np.kron(C1,C2)
     return np.reshape(C,(lmax[0],lmax[1],mmax[0],mmax[1],nmax[0],nmax[1]))
 
+def directInversion(hn,P,mmax):
+    """Direct inversion method [Refregier and Bacon 2003 eq. 13]
+    hn: convolved shapelet coefficients
+    P: PSF matrix
+    mmax: shape of unconvolved shapelet coefficients
+    """
+    Pinv=np.linalg.pinv(P)
+    fm=np.reshape(np.dot(Pinv.T,np.ravel(hn)), mmax)
+    return fm
+
 if __name__ == "__main__":
 
     print '============================================'
@@ -144,15 +154,21 @@ if __name__ == "__main__":
 
     #psfMatrix()
     try:
-        g=np.random.rand(6,5)
-        P=psfMatrix(g,1.5,2.5,3.5,[6,5],[7,4],[8,9],mode='hermite')
+        gl=np.random.rand(6,5)
+        P=psfMatrix(gl,1.5,2.5,3.5,[6,5],[7,4],[8,9],mode='hermite')
         print P.shape
     except:
         print 'Test failed (%i):'%tc, sys.exc_info()[0]
         te+=1
 
-    Pinv=np.linalg.pinv(P)
-    print Pinv.shape
+    #directInversion(hn,P,mmax)
+    try:
+        hn=np.random.rand(8,9)
+        fm=directInversion(hn,P,(7,4))
+        print fm.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
 
     print '============================================'
     print '%i of %i tests succeeded'%(tc-te,tc)

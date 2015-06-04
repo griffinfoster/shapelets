@@ -61,6 +61,8 @@ if __name__ == '__main__':
             ptitle='Fourier(Laguerre)'
         else:
             ptitle='Laguerre'
+
+    print d['beta']
     
     betaRad=shapelets.measure.beta_pix2angle(d['beta'],phi=d['phi'],deltas=[d['dra'],d['ddec']]) #convert beta[pixels] to beta[radians]
     pprint.pprint(shapelets.measure.all(d['coeffs'],betaRad,d['norder'],mode=d['mode']))

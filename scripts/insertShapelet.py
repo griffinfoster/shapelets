@@ -41,10 +41,11 @@ if __name__ == '__main__':
         help='Use degrees instead of radians')
     o.add_option('--str',dest='str_flag', action='store_true',
         help='Use hh:mm:ss.sss format for RA and dd:mm:ss.sss format for DEC')
-    opts, args = o.parse_args(sys.argv[1:])
 
     o.add_option('-b','--beta',dest='beta',default=None,
         help='Override beta (in pixels), can be a 1, 2, or 3 comma seperated values')
+    opts, args = o.parse_args(sys.argv[1:])
+
 
     #load coefficient file
     if opts.cfn is None:
@@ -57,10 +58,14 @@ if __name__ == '__main__':
         phi=d['phi']
     else:
         betaList=map(float,opts.beta.split(','))
-        if len(betaList)==1: beta=[betaList[0],betaList[0]]
-        elif len(betaList)==2: beta=betaList
+        if len(betaList)==1:
+            beta=[betaList[0],betaList[0]]
+            phi=d['phi']
+        elif len(betaList)==2:
+            beta=betaList
+            phi=d['phi']
         elif len(betaList)==3:
-            beta=[betaList[0],betaList[1]])
+            beta=[betaList[0],betaList[1]]
             phi=betaList[2]
 
     ##scale beta to radians
