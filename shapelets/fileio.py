@@ -18,16 +18,16 @@ except ImportError: pass
 def readFITS(fn,hdr=False):
     """Read a FITS image file and returns a numpy array (only Stokes I or the first Stokes index)
     """
-    hdulist=pf.open(fn)
-    im=hdulist[0].data
-    #image data format: [frequency, polarization, dec, ra]
+    hdulist = pf.open(fn)
+    im = hdulist[0].data
     hdulist.close()
-    h=getFITSInfo(fn)
-    im=im[0,0]
+    h = getFITSInfo(fn)
+    if im.ndim==4: #image data format: [frequency, polarization, dec, ra]
+        im = im[0,0]
     #orient the image to the same way it would look in a normal FITS viewer
-    if h['dra'] > 0: im=np.fliplr(im)
-    if h['ddec'] > 0: im=np.flipud(im)
-    if hdr: return im,h
+    if h['dra'] > 0: im = np.fliplr(im)
+    if h['ddec'] > 0: im = np.flipud(im)
+    if hdr: return im, h
     else: return im
 
 def getFITSInfo(fn):
@@ -233,6 +233,15 @@ if __name__ == "__main__":
     tc+=1
     try:
         im,hdr=readFITS('../data/N6251_test.fits',hdr=True)
+        print 'FITS header:', hdr
+        print 'FITS image shape:', im.shape
+    except:
+        print 'Test failed (%i):'%tc, sys.exc_info()[0]
+        te+=1
+
+    tc+=1
+    try:
+        im,hdr=readFITS('../data/2dFGRSTGN274Z24.fits', hdr=True)
         print 'FITS header:', hdr
         print 'FITS image shape:', im.shape
     except:
