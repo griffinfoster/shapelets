@@ -9,7 +9,7 @@ import scipy.constants
 #from matplotlib import pyplot as plt
 import shapelets
 import shapelets.phs
-import pyrap.tables as pt
+import casacore.tables as tbls
 import distutils.dir_util
 
 if __name__ == '__main__':
@@ -146,13 +146,13 @@ if __name__ == '__main__':
             MS.SaveVis(Col=data_column)
             print 'done'
 
-        MS=pt.table(ofn,readonly=True)
+        MS=tbls.table(ofn,readonly=True)
         uvw=MS.col('UVW').getcol() # [vis id, (u,v,w)]
         vis=MS.col(data_column).getcol() #[vis id, freq id, stokes id]
         MS.close()
 
         #gather channel frequency information
-        SW=pt.table(ofn+'/SPECTRAL_WINDOW')
+        SW=tbls.table(ofn+'/SPECTRAL_WINDOW')
         freqs=SW.col('CHAN_FREQ').getcol()
         cc=scipy.constants.c
         uu=uvw[:,0]
@@ -203,7 +203,7 @@ if __name__ == '__main__':
         print 'done'
         
         print 'writing to:',ofn
-        MS=pt.table(ofn,readonly=False)
+        MS=tbls.table(ofn,readonly=False)
         MS.putcol(data_column, newVis)
         MS.close()
         print 'done'

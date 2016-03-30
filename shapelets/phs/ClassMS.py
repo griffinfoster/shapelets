@@ -1,5 +1,5 @@
 import numpy as np
-from pyrap.tables import table
+from casacore.tables import table
 from rad2hmsdms import rad2hmsdms
 import ModColor
 import reformat
@@ -539,7 +539,7 @@ class ClassMS():
         t.close()
     
     def PutCasaCols(self):
-        import pyrap.tables
-        pyrap.tables.addImagingColumns(self.MSName,ack=False)
+        import casacore.tables
+        casacore.tables.addImagingColumns(self.MSName,ack=False)
         #self.PutNewCol("CORRECTED_DATA")
         #self.PutNewCol("MODEL_DATA")

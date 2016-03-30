@@ -6,7 +6,6 @@ Solve for shapelet coefficients based on beta, xc, phi, and n_max
 import sys
 import numpy as np
 import shapelets
-import pywcs
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -94,9 +93,11 @@ if __name__ == '__main__':
     #determine (RA,dec) coordinates for centroid position
     #TODO: this is correct for when the FITS header is delta RA<0 and delta Dec>0, this may need to be generalized
     if extent is None:
-        radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+1,xc[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+        #radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+1,xc[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+        radec=hdr['wcs'].all_pix2world(np.array([ [xc[1]+1,xc[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
     else:
-        radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+        #radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+        radec=hdr['wcs'].all_pix2world(np.array([ [xc[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
 
     print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 

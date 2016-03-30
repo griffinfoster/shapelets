@@ -1,11 +1,11 @@
-from pyrap.tables import table
+from casacore.tables import table
 import numpy as np
 import os
 import gc
 import ephem
 import re
-import pyrap.quanta as qa
-import pyrap.measures as pm
+import casacore.quanta as qa
+import casacore.measures as pm
 import rad2hmsdms
 
 

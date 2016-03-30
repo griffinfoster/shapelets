@@ -3,12 +3,12 @@ Read various image filetypes: FITS,png,jpeg
 Write coeff file
 """
 
-import pyfits as pf
+from astropy.io import fits
 import numpy as np
 import cPickle as pickle
 import sys
 import json
-import pywcs
+import astropy.wcs
 
 #optional packages:
 try:
@@ -18,7 +18,7 @@ except ImportError: pass
 def readFITS(fn,hdr=False):
     """Read a FITS image file and returns a numpy array (only Stokes I or the first Stokes index)
     """
-    hdulist = pf.open(fn)
+    hdulist = fits.open(fn)
     im = hdulist[0].data
     hdulist.close()
     h = getFITSInfo(fn)
@@ -35,7 +35,7 @@ def getFITSInfo(fn):
     return [RA,DEC], pixel resolution, pixel of [RA,DEC]
     generates a WCS instance for converting between sky and pixels
     """
-    hdulist=pf.open(fn)
+    hdulist=fits.open(fn)
     hdr=hdulist[0].header
     #CTYPE1: RA---[PROJ], projection SIN/TAN/ARC
     #CRVAL1: reference RA position in degrees
@@ -58,7 +58,7 @@ def getFITSInfo(fn):
     bmin=hdr['BMIN']
     bpa=hdr['BPA']
     #Generate a WCS structure, using the normal method creates errors due to header formating
-    wcs = pywcs.WCS(naxis=2)
+    wcs = astropy.wcs.WCS(naxis=2)
     wcs.wcs.crval = [ra,dec]
     wcs.wcs.crpix = [raPix,decPix]
     wcs.wcs.cdelt = [dra,ddec]

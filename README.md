@@ -1,28 +1,23 @@
 shapelets
 ===
 
-Created: 15.02.12  
-Last Modified: 01.06.15  
 Contact: griffin.foster@gmail.com  
 
-A python module for fitting and decomposing images (FITS,PNG,JPEG...) into shapelet coefficients, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
+A python module for fitting and decomposing images (FITS, PNG, JPEG...) into shapelet coefficients, support for Cartesian and polar forms using Hermite and Laguerre polynomials.  
 
 Based on the shapelet framework developed in [Shapelets: I. A Method for Image Analysis](http://arxiv.org/abs/astro-ph/0105178) and the [IDL shapelet software](http://www.astro.caltech.edu/~rjm/shapelets/). 
 
 #### Required Python Modules
-
-* distutils (usually a standard install with python)
-* cPickle (usually a standard install with python) 
-* matplotlib 
+ 
+* matplotlib
 * numpy
-* scipy 
-* pyfits 
+* scipy
+* astropy
 * json
-* pywcs
-* pyrap 
 
 #### Optional Python Modules
 
+* [python-casacore](https://github.com/casacore/python-casacore)
 * PIL 
 
 #### Install
@@ -48,7 +43,7 @@ The scripts directory contains a number scripts for plotting, decomposing, and f
 * plotCoeffs.py : given a shapelet coefficient file, plot the modelled source and coefficients
 * solveShapelet.py : given a set of parameters and an image, decompose the image into shapelet coefficients
 * fitShapelet.py : fit parameters to minimize the chi^2 difference between shapelet model and image
-* insertShapelet.py : insert a shapelet coefficient set into a Measurement Set
+* insertShapelet.py : insert a shapelet coefficient set into a Measurement Set (requires python-casacore)
 
 #### Examples
 
@@ -67,4 +62,3 @@ fitShapelet.py -r 489,530,489,527 -N 436,561,405,487 ../../data/zen.2455819.6977
 plotCoeffs.py ../data/solve/N6251_cart.pkl
 
 ```
-

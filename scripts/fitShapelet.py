@@ -7,7 +7,6 @@ import sys
 import numpy as np
 from scipy import optimize
 import shapelets
-import pywcs
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -242,9 +241,11 @@ if __name__ == '__main__':
 
         #determine (RA,dec) coordinates for centroid position
         if extent is None:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+1,xc1[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+            #radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+1,xc1[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+            radec=hdr['wcs'].all_pix2world(np.array([ [xc1[1]+1,xc1[0]+1] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
         else:
-            radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc1[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+            #radec=hdr['wcs'].wcs_pix2sky(np.array([ [xc1[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc1[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
+            radec=hdr['wcs'].all_pix2world(np.array([ [xc1[1]+extent[0]+1,im0.shape[0]-(extent[2]+xc1[0])] ]),1)[0] #unit: degrees, FITS conventions: first pixel is (1,1)
 
         print 'Centroid RA: %f (deg) Dec: %f (deg)'%(radec[0],radec[1])
 
