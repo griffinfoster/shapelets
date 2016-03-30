@@ -22,6 +22,12 @@ Based on the shapelet framework developed in [Shapelets: I. A Method for Image A
 
 #### Install
 
+To install the current stable version (0.2) use pip:
+
+```
+pip install shapelets
+```
+
 While developing it is useful to do a developer install:
 
 ```

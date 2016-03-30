@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 import numpy as np
 import os, sys, glob
 
-__version__ = '0.2'
+__version__ = '0.2' #this needs to be kept up to date with shapelets/__init__.py
 
 setup(name = 'shapelets',
     version = __version__,
