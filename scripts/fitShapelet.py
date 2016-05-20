@@ -184,6 +184,10 @@ if __name__ == '__main__':
                     xc1=[res['x'][3],res['x'][4]]
         print '\tDone'
 
+        # Correct if beta is negative
+        if beta1[0] < 0.: beta1[0] = np.abs(beta1[0])
+        if beta1[1] < 0.: beta1[1] = np.abs(beta1[1])
+
         #scipy optimize brute force over a range of N values
         n0=1
         n1=opts.brute+1
@@ -321,6 +325,10 @@ if __name__ == '__main__':
                     phi1=res['x'][2]
                     xc1=[res['x'][3],res['x'][4]]
         print '\tDone'
+
+        # Correct if beta is negative
+        if beta1[0] < 0.: beta1[0] = np.abs(beta1[0])
+        if beta1[1] < 0.: beta1[1] = np.abs(beta1[1])
 
         #scipy optimize brute force over a range of N values
         n0=1
