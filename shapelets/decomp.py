@@ -221,12 +221,18 @@ def chi2PolarFunc(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_
             yc=params[pid]
             fitParams['xc']=True
 
+    #if beta0<0.:
+    #    print 'warning: beta going negative, setting to 0.0'
+    #    beta0=0.
+    #if beta1<0.:
+    #    print 'warning: beta going negative, setting to 0.0'
+    #    beta1=0.
     if beta0<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        beta0=0.
+        print 'warning: beta going negative, taking absolute value'
+        beta0 = np.abs(beta0)
     if beta1<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        beta1=0.
+        print 'warning: beta going negative, taking absolute value'
+        beta1 = np.abs(beta1)
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(beta0,beta1,phi,xc,yc)
 
     #update noise map
@@ -300,12 +306,18 @@ def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_beta=
             yc=params[pid]
             fitParams['xc']=True
 
-    if betaX<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        betaX=0.
-    if betaY<0.:
-        print 'warning: beta going negative, setting to 0.0'
-        betaY=0.
+    #if betaX<0.:
+    #    print 'warning: beta going negative, setting to 0.0'
+    #    betaX=0.
+    #if betaY<0.:
+    #    print 'warning: beta going negative, setting to 0.0'
+    #    betaY=0.
+    if beta0<0.:
+        print 'warning: beta going negative, taking absolute value'
+        betaX = np.abs(betaY)
+    if beta1<0.:
+        print 'warning: beta going negative, taking absolute value'
+        betaY = np.abs(betaX)
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(betaX,betaY,phi,xc,yc)
 
     #update noise map
