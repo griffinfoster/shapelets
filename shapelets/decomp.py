@@ -312,10 +312,10 @@ def chi2Func(params,nmax,im,nm,order=['beta0','beta1','phi','yc','xc'],set_beta=
     #if betaY<0.:
     #    print 'warning: beta going negative, setting to 0.0'
     #    betaY=0.
-    if beta0<0.:
+    if betaX<0.:
         print 'warning: beta going negative, taking absolute value'
         betaX = np.abs(betaY)
-    if beta1<0.:
+    if betaY<0.:
         print 'warning: beta going negative, taking absolute value'
         betaY = np.abs(betaX)
     print 'beta: (%f,%f)\t phi: %f\txc: (%f,%f)'%(betaX,betaY,phi,xc,yc)
