@@ -40,12 +40,17 @@ def initParams(im, mode='basic', frac=.2, hdr=None):
     """Initial guess for beta, phi, nmax
     mode:
         basic: beta is determined based on the size of the image and the frac arguement, phi is 0
-        gauss: a 2D Gaussian is fit to the image, parameters derived from fit
+        fit: a 2D Gaussian is fit to the image, parameters derived from fit, does not work well for non-Gaussian sources
             Theta_max = fit Gaussian width
             Theta_min = PSF FWHM
             beta ~ sqrt((Theta_max * Theta_min))
             phi ~ fit Gaussian rotation angle
             nmax ~ (Theta_max / Theta_min) + 1
+        moments: using image moments, works better for non-Gaussian sources
+            Theta_max = initial Gaussian width
+            beta ~ sqrt(Theta_max)
+            phi = derived from second order image moments
+            name ~ number of pixels in image
     frac: fraction of image to use as the initial beta (basic)
     hdr: FITS header dictionary with PSF size (fit)
     gaussian fitting borrowed from: http://wiki.scipy.org/Cookbook/FittingData
@@ -53,7 +58,7 @@ def initParams(im, mode='basic', frac=.2, hdr=None):
     """
     if mode.startswith('basic'):
         return [frac*im.shape[0], frac*im.shape[1]], 0., [int((frac * im.shape[0])-1), int((frac * im.shape[1])-1)]
-    elif mode.startswith('gauss'):
+    elif mode.startswith('fit'):
         #fit a 2D Gaussian to the image
         params = initGaussian(im)
         errorfunction = lambda p: np.ravel(ellipticalGaussian2D(*p)(*np.indices(im.shape)) - im)
