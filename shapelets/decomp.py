@@ -7,39 +7,40 @@ Implementation of "Statistics in Theory and Practice", Lupton, Ch. 11
 import numpy as np
 import shapelet,img
 from scipy import optimize
+from scipy import stats
 
 def ellipticalGaussian2D(x0=0.,y0=0.,sigmax=1.,sigmay=1.,phi=0.,amp=1.,offset=0.):
-    """A generalized 2D ellipitical Gaussian function with centre (x0,y0), width (sigmax,sigmay), amplitude amp, offset, and rotation angle phi
+    """A generalized 2D ellipitical Gaussian function with centre (x0,y0), width (sigmax,sigmay), amplitude amp, offset, and rotation angle phi (radians)
     """
     aa=((np.cos(phi))**2.)/(2.*(sigmax**2.)) + ((np.sin(phi))**2.)/(2.*(sigmay**2.))
     bb=(-1.*np.sin(2.*phi))/(4.*(sigmax**2.)) + (np.sin(2.*phi))/(4.*(sigmay**2.))
     cc=((np.sin(phi))**2.)/(2.*(sigmax**2.)) + ((np.cos(phi))**2.)/(2.*(sigmay**2.))
-    return lambda x,y: amp * np.exp( -1.*( aa*((x-x0)**2.) + 2.*bb*(x-x0)*(y-y0) + cc*((y-y0)**2.) ) ) + offset
+    return lambda x,y: amp * np.exp( -1.*( aa*((x-x0)**2.) - 2.*bb*(x-x0)*(y-y0) + cc*((y-y0)**2.) ) ) + offset
 
 def initGaussian(im):
-    """Returns (y, x, sigmay, sigmax, phi, amp, offset)
+    """Returns (y0, x0, sigmay, sigmax, phi, amp, offset)
     the gaussian parameters of a 2D distribution by calculating its
     moments
     borrowed from: http://wiki.scipy.org/Cookbook/FittingData"""
-    total = im.sum()
-    X, Y = np.indices(im.shape)
+    #total = im.sum()
+    #X, Y = np.indices(im.shape)
     #y = (Y*im).sum()/total
     #x = (X*im).sum()/total
-    y,x=img.maxPos(im)
-    col = im[:, int(y)]
-    sigmax = np.sqrt(abs((np.arange(col.size)-y)**2*col).sum()/np.abs(col).sum())
-    row = im[int(x), :]
-    sigmay = np.sqrt(abs((np.arange(row.size)-x)**2*row).sum()/np.abs(row).sum())
-    offset=np.median(im)
-    amp = im.max()-offset
-    phi=0.
-    return x, y, sigmax, sigmay, phi, amp, offset
+    y0, x0 = img.maxPos(im)
+    col = im[:, int(y0)]
+    sigmax = np.sqrt(abs((np.arange(col.size)-y0)**2*col).sum()/np.abs(col).sum())
+    row = im[int(x0), :]
+    sigmay = np.sqrt(abs((np.arange(row.size)-x0)**2*row).sum()/np.abs(row).sum())
+    offset = np.median(im)
+    amp = im.max() - offset
+    phi = 0. # no rotation
+    return float(x0), float(y0), sigmax, sigmay, phi, amp, offset
 
-def initParams(im,mode='basic',frac=.2,hdr=None):
+def initParams(im, mode='basic', frac=.2, hdr=None):
     """Initial guess for beta, phi, nmax
     mode:
         basic: beta is determined based on the size of the image and the frac arguement, phi is 0
-        fit: a 2D Gaussian is fit to the image, parameters derived from fit
+        gauss: a 2D Gaussian is fit to the image, parameters derived from fit
             Theta_max = fit Gaussian width
             Theta_min = PSF FWHM
             beta ~ sqrt((Theta_max * Theta_min))
@@ -47,36 +48,52 @@ def initParams(im,mode='basic',frac=.2,hdr=None):
             nmax ~ (Theta_max / Theta_min) + 1
     frac: fraction of image to use as the initial beta (basic)
     hdr: FITS header dictionary with PSF size (fit)
-    fitting borrowed from: http://wiki.scipy.org/Cookbook/FittingData
+    gaussian fitting borrowed from: http://wiki.scipy.org/Cookbook/FittingData
     returns: beta, phi, nmax
     """
     if mode.startswith('basic'):
-        return [frac*im.shape[0],frac*im.shape[1]], 0., int((frac/np.max(im.shape))-1)
-    elif mode.startswith('fit'):
+        return [frac*im.shape[0], frac*im.shape[1]], 0., [int((frac * im.shape[0])-1), int((frac * im.shape[1])-1)]
+    elif mode.startswith('gauss'):
         #fit a 2D Gaussian to the image
-        params=initGaussian(im)
+        params = initGaussian(im)
         errorfunction = lambda p: np.ravel(ellipticalGaussian2D(*p)(*np.indices(im.shape)) - im)
-        p, success = optimize.leastsq(errorfunction, params)
-        Theta_max=np.abs(2.3548*np.array([p[2],p[3]])) #FWHM, the fitter can return negative values of sigma
+        p0, success = optimize.leastsq(errorfunction, params)
+        print params
+        print p0
+        Theta_max = np.abs(2.3548*np.array([p0[2],p0[3]])) #FWHM, the fitter can return negative values of sigma
 
         #compute PSF size in pixels
-        bpa=np.pi*hdr['bpa']/180.
-        bmaj=np.pi*hdr['bmaj']/180.
-        bmin=np.pi*hdr['bmin']/180.
-        dra=np.pi*hdr['dra']/180.
-        ddec=np.pi*hdr['ddec']/180.
-        rotM=np.matrix([[np.cos(bpa),-1.*np.sin(bpa)],[np.sin(bpa),np.cos(bpa)]])
+        bpa = np.pi * hdr['bpa']/180.
+        bmaj = np.pi * hdr['bmaj']/180.
+        bmin = np.pi * hdr['bmin']/180.
+        dra = np.pi * hdr['dra']/180.
+        ddec = np.pi * hdr['ddec']/180.
+        rotM = np.matrix( [[np.cos(bpa), -1.*np.sin(bpa)], [np.sin(bpa), np.cos(bpa)]] )
 
-        temp0=np.dot(rotM,np.array([(np.pi/180.)*hdr['dra'],0.]))
-        temp1=np.dot(rotM,np.array([0.,(np.pi/180.)*hdr['ddec']]))
-        rotDeltas=np.array([np.sqrt(temp0[0,0]**2.+temp0[0,1]**2.), np.sqrt(temp1[0,0]**2.+temp1[0,1]**2.)])
-        psfPix=(np.array([bmaj,bmin])/rotDeltas)/2.3548 #go from FWHM to sigma, it is better to error on the side of higher order structure, then to miss it
-        Theta_min=np.abs(np.array(psfPix).flatten())
+        temp0 = np.dot(rotM, np.array([(np.pi/180.) * hdr['dra'], 0.]))
+        temp1 = np.dot(rotM, np.array([0., (np.pi/180.) * hdr['ddec']]))
+        rotDeltas = np.array([np.sqrt(temp0[0,0]**2. + temp0[0,1]**2.), np.sqrt(temp1[0,0]**2. + temp1[0,1]**2.)])
+        psfPix = (np.array([bmaj, bmin])/rotDeltas) / 2.3548 #go from FWHM to sigma, it is better to error on the side of higher order structure, then to miss it
+        Theta_min = np.abs(np.array(psfPix).flatten())
         
-        beta=np.sqrt(Theta_max*Theta_min)
-        phi=p[4]
-        nmax=[int((Theta_max[0]/Theta_min[0])+1),int((Theta_max[1]/Theta_min[1])+1)]
+        beta = np.sqrt(Theta_max * Theta_min)
+        phi = p0[4]
+        nmax = [int((Theta_max[0] / Theta_min[0]) + 1),int((Theta_max[1] / Theta_min[1]) + 1)]
         return beta, phi, nmax
+    elif mode.startswith('moments'):
+        params = initGaussian(im)
+        # calculate phi by using the second order image moments - https://en.wikipedia.org/wiki/Image_moment
+        import skimage.measure
+        moments = skimage.measure.moments(np.array(im, dtype='float64'), order=3)
+        cr = moments[0, 1] / moments[0, 0]
+        cc = moments[1, 0] / moments[0, 0]
+        cmoments = skimage.measure.moments_central(np.array(im, dtype='float64'), cr, cc)
+        phi = 0.5 * np.arctan2( 2. * cmoments[1, 1] / cmoments[0, 0], (cmoments[2, 0] / cmoments[0, 0]) - (cmoments[0, 2] / cmoments[0, 0]) )
+
+        Theta_max = np.abs(2.3548 * np.array([params[2], params[3]])) #FWHM, the fitter can return negative values of sigma
+        beta = np.sqrt(Theta_max)
+
+        return beta, phi, [int((frac * im.shape[0])-1), int((frac * im.shape[1])-1)]
 
 def initBetaPhi(im,mode='basic',frac=.2,circular=False):
     """Depreciated: use initParams
