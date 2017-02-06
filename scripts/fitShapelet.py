@@ -69,7 +69,7 @@ if __name__ == '__main__':
         extent=map(int, opts.region.split(','))
         im=shapelets.img.selPxRange(im0,[extent[2],extent[3],extent[0],extent[1]])
     else:
-        im=im
+        im=im0
 
     #noise map
     if opts.nregion is None:

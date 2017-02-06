@@ -54,9 +54,17 @@ def getFITSInfo(fn):
     dec=hdr['CRVAL2']
     ddec=hdr['CDELT2']
     decPix=hdr['CRPIX2']
-    bmaj=hdr['BMAJ']
-    bmin=hdr['BMIN']
-    bpa=hdr['BPA']
+
+    # Try to get the PSF FWHM from th header for an initial size scale
+    if 'BMAJ' in hdr.keys():
+        bmaj = hdr['BMAJ']
+        bmin = hdr['BMIN']
+        bpa = hdr['BPA']
+    else: # BMAJ/BMIN/BPA is optional, if not in header, then replace with 3 * pixel resolution (usually the standard resolution in radio synthesis images)
+        bmaj = 3. * np.abs(dra)
+        bmin = 3. * np.abs(ddec)
+        bpa = 0.
+
     #Generate a WCS structure, using the normal method creates errors due to header formating
     wcs = astropy.wcs.WCS(naxis=2)
     wcs.wcs.crval = [ra,dec]
