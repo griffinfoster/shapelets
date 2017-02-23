@@ -82,7 +82,7 @@ def initParams(im, mode='basic', frac=.2, hdr=None):
         Theta_min = np.abs(np.array(psfPix).flatten())
         
         beta = np.sqrt(Theta_max * Theta_min)
-        phi = p0[4]
+        phi = -1. * p0[4]
         nmax = [int((Theta_max[0] / Theta_min[0]) + 1),int((Theta_max[1] / Theta_min[1]) + 1)]
         return beta, phi, nmax
     elif mode.startswith('moments'):
